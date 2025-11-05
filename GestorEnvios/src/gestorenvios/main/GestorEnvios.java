@@ -4,6 +4,8 @@
  */
 package gestorenvios.main;
 
+import gestorenvios.config.ApplicationConfig;
+
 /**
  *
  * @author Grupo 175
@@ -15,6 +17,8 @@ public class GestorEnvios {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        
+        System.out.println(ApplicationConfig.get("db.url"));
     }
     
 }
