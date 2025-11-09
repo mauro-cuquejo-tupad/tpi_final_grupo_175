@@ -4,11 +4,23 @@
  */
 package gestorenvios.dao;
 
+import java.sql.Connection;
+import java.util.List;
+
 /**
  *
- * @author Mauro_Cuquejo
+ * @author Grupo_175
+ * @param <T>
+ * @param <K>
  */
-public interface GenericDAO {
-    public <T> void insertar(T entidad);
-    
+
+
+public interface GenericDAO <T, K> {
+    public void insertar(T entidad) throws Exception;
+    public void insertTx(T entidad, Connection conn) throws Exception;
+    public void actualizar(T entidad) throws Exception;
+    public void eliminarLogico(K id) throws Exception; // BORRADO LÓGICO. UPDATE
+    T buscarPorId(K id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
+    List<T> buscarTodos()throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
+   
 }
