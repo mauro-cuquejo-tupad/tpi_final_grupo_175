@@ -13,14 +13,18 @@ import java.util.List;
  * @param <T>
  * @param <K>
  */
+public interface GenericDAO<T> {
 
-
-public interface GenericDAO <T, K> {
     public void insertar(T entidad) throws Exception;
+
     public void insertTx(T entidad, Connection conn) throws Exception;
+
     public void actualizar(T entidad) throws Exception;
-    public void eliminarLogico(K id) throws Exception; // BORRADO LÓGICO. UPDATE
-    T buscarPorId(K id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
-    List<T> buscarTodos()throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
-   
+
+    public void eliminarLogico(Long id) throws Exception; // BORRADO LÓGICO. UPDATE
+
+    T buscarPorId(Long id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
+
+    List<T> buscarTodos() throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
+
 }
