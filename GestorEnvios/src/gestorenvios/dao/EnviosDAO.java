@@ -25,19 +25,19 @@ import java.util.ArrayList;
 public class EnviosDAO implements GenericDAO<Envios> {
 
     /* Query de inserción. */
-    private static final String INSERT_SQL = "INSERT INTO envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     /* Query de actualización. */
-    private static final String UPDATE_SQL = "UPDATE envio SET tracking = ?, id_empresa = ?, id_tipo_envio = ?, costo = ?, fecha_despacho = ?, fecha_estimada = ?, id_estado_envio = ? WHERE id = ?";
+    private static final String UPDATE_SQL = "UPDATE Envio SET tracking = ?, id_empresa = ?, id_tipo_envio = ?, costo = ?, fecha_despacho = ?, fecha_estimada = ?, id_estado_envio = ? WHERE id = ?";
 
     /* Query de soft delete. */
-    private static final String DELETE_SQL = "UPDATE envio SET eliminado = TRUE WHERE id = ?";
+    private static final String DELETE_SQL = "UPDATE Envio SET eliminado = TRUE WHERE id = ?";
 
     /* Query SELECT por ID */
-    private static final String SELECT_BY_ID_SQL = "SELECT * FROM envio WHERE eliminado = FALSE AND id = ?";
+    private static final String SELECT_BY_ID_SQL = "SELECT * FROM Envio WHERE eliminado = FALSE AND id = ?";
 
     /* Query SELECT ALL */
-    private static final String SELECT_ALL_SQL = "SELECT * FROM envio WHERE eliminado = FALSE";
+    private static final String SELECT_ALL_SQL = "SELECT * FROM Envio WHERE eliminado = FALSE";
 
     /**
      * Constructor vacío.
@@ -203,25 +203,25 @@ public class EnviosDAO implements GenericDAO<Envios> {
         }
     }
 
-    private Envios mapEnvio(ResultSet rs) throws Exception {
+    private Envios mapEnvio(ResultSet resultSet) throws Exception {
         Envios envio = new Envios();
 
-        envio.setId(rs.getLong("id"));
-        envio.setEliminado(rs.getBoolean("eliminado"));
-        envio.setTracking(rs.getString("tracking"));
-        envio.setCosto(rs.getDouble("costo"));
+        envio.setId(resultSet.getLong("id"));
+        envio.setEliminado(resultSet.getBoolean("eliminado"));
+        envio.setTracking(resultSet.getString("tracking"));
+        envio.setCosto(resultSet.getDouble("costo"));
 
-        if (rs.getDate("fecha_despacho") != null) {
-            envio.setFechaDespacho(rs.getDate("fecha_despacho").toLocalDate());
+        if (resultSet.getDate("fecha_despacho") != null) {
+            envio.setFechaDespacho(resultSet.getDate("fecha_despacho").toLocalDate());
         }
-        if (rs.getDate("fecha_estimada") != null) {
-            envio.setFechaEstimada(rs.getDate("fecha_estimada").toLocalDate());
+        if (resultSet.getDate("fecha_estimada") != null) {
+            envio.setFechaEstimada(resultSet.getDate("fecha_estimada").toLocalDate());
         }
 
         // Mapeo de ID (BD) a Enum (Java) usando método 'fromId'
-        envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("id_empresa")));
-        envio.setTipo(TipoEnvio.fromId(rs.getInt("id_tipo_envio")));
-        envio.setEstado(EstadoEnvio.fromId(rs.getInt("id_estado_envio")));
+        envio.setEmpresa(EmpresaEnvio.fromId(resultSet.getInt("id_empresa")));
+        envio.setTipo(TipoEnvio.fromId(resultSet.getInt("id_tipo_envio")));
+        envio.setEstado(EstadoEnvio.fromId(resultSet.getInt("id_estado_envio")));
 
         return envio;
     }

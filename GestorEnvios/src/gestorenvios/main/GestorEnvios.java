@@ -5,6 +5,8 @@
 package gestorenvios.main;
 
 import gestorenvios.config.ApplicationConfig;
+import gestorenvios.dao.EnviosDAO;
+import gestorenvios.dao.PedidosDAO;
 
 /**
  *
@@ -15,10 +17,18 @@ public class GestorEnvios {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         // TODO code application logic here
         
         System.out.println(ApplicationConfig.get("db.url"));
+        EnviosDAO enviosDAO = new EnviosDAO();
+        PedidosDAO pedidosDAO = new PedidosDAO(enviosDAO);
+        try {
+            System.out.println(enviosDAO.buscarPorId(5L));
+            System.out.println(pedidosDAO.buscarPorId(7L));
+        } catch (Exception e) {
+            System.out.println("Error al buscar el envio: " + e.getMessage());
+        }
     }
     
 }
