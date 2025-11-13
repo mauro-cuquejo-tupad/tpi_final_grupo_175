@@ -18,8 +18,7 @@ public class GestorEnvios {
      * @param args the command line arguments
      */
     static void main(String[] args) {
-        // TODO code application logic here
-        
+
         System.out.println(ApplicationConfig.get("db.url"));
         EnviosDAO enviosDAO = new EnviosDAO();
         PedidosDAO pedidosDAO = new PedidosDAO(enviosDAO);
