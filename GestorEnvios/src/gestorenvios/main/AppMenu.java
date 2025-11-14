@@ -1,5 +1,7 @@
 package gestorenvios.main;
 
+import gestorenvios.dao.EnviosDAO;
+import gestorenvios.dao.PedidosDAO;
 import java.util.Scanner;
 
 public class AppMenu {
@@ -126,7 +128,7 @@ public class AppMenu {
             case 4 ->
                 menuHandler.eliminarPedido();
             case 5 ->
-                menuHandler.crearEnvioIndependiente();         ///VER
+                menuHandler.crearEnvioIndependiente();         
             case 6 ->
                 menuHandler.listarEnvios();
             case 7 ->
@@ -176,11 +178,10 @@ public class AppMenu {
      * dependencias
      */
 
-/*  private PedidoServiceImpl createPedidoService() {
-        EnvioDAO envioDAO = new EnvioDAO();
-        PedidoDAO pedidoDAO = new PedidoDAO(envioDAO);
+    private PedidoServiceImpl createPedidoService() {
+        EnviosDAO envioDAO = new EnviosDAO();
+        PedidosDAO pedidoDAO = new PedidosDAO(envioDAO);
         EnvioServiceImpl envioService = new EnvioServiceImpl(envioDAO);
         return new PedidoServiceImpl(pedidoDAO, envioService);
-    }
-*/    
+    }    
 }

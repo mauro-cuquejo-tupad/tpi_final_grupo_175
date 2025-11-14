@@ -46,9 +46,9 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * relación de forma eager. Solo retorna pedidos activos (eliminado=FALSE).
      */
     private static final String SELECT_BY_ID_SQL
-            = "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+            = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE AND p.id = ?";
 
@@ -58,32 +58,32 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
          * Filtra por eliminado=FALSE (solo pedidos activos).
      */
     private static final String SELECT_ALL_SQL
-            = "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+            = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE";
 
     /*
-         * Query de búsqueda por clienteNombre con LIKE.
+         * Query de búsqueda por cliente_nombre con LIKE.
          * Permite búsqueda flexible
          * Solo pedidos activos (eliminado=FALSE).
      */
     private static final String SEARCH_BY_NAME_SQL
-            = "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+            = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
-            + "WHERE p.eliminado = FALSE AND (p.clienteNombre LIKE ?)";
+            + "WHERE p.eliminado = FALSE AND (p.cliente_nombre LIKE ?)";
 
     /**
      * Query de búsqueda exacta por NÚMERO de pedido. Incluye LEFT JOIN con
      * envíos. Filtra por eliminado=FALSE.
      */
     private static final String SEARCH_BY_NUMERO_SQL
-            = "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+            = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE AND p.numero = ?";
     
@@ -98,9 +98,9 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * Filtra por e.tracking (tabla Envio) pero devuelve el Pedido.
      */
     private static final String SEARCH_BY_TRACKING_SQL =
-              "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+              "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = 0 AND e.tracking = ?";
 
@@ -502,7 +502,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // Reutilizamos tu helper mágico mapPedido
+      
                     return mapPedido(rs);
                 }
             }
@@ -574,7 +574,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         pedido.setId(rs.getLong("id"));
         pedido.setNumero(rs.getString("numero"));
         pedido.setFecha(rs.getDate("fecha").toLocalDate()); // Convertir sql.Date a time.LocalDate
-        pedido.setClienteNombre(rs.getString("clienteNombre"));
+        pedido.setClienteNombre(rs.getString("cliente_nombre"));
         pedido.setTotal(rs.getDouble("total"));
         pedido.setEliminado(rs.getBoolean("eliminado"));
 
@@ -597,12 +597,13 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             envio.setTracking(rs.getString("envio_tracking")); // ¡Usa el alias!
             envio.setCosto(rs.getDouble("envio_costo"));       // ¡Usa el alias!
 
-            // Asumiendo que "fechaDespacho" y "fechaEstimada" pueden ser nulas
-            if (rs.getDate("envio_fechaDespacho") != null) {
-                envio.setFechaDespacho(rs.getDate("envio_fechaDespacho").toLocalDate());
+            // Asumiendo que 'fecha_despacho' y 'fecha_estimada' pueden ser nulas
+            if (rs.getDate("envio_fecha_despacho") != null) {
+                envio.setFechaDespacho(rs.getDate("envio_fecha_despacho").toLocalDate());
+
             }
-            if (rs.getDate("envio_fechaEstimada") != null) {
-                envio.setFechaEstimada(rs.getDate("envio_fechaEstimada").toLocalDate());
+            if (rs.getDate("envio_fecha_estimada") != null) {
+                envio.setFechaEstimada(rs.getDate("envio_fecha_estimada").toLocalDate());
             }
 
             // Mapear los Enums de Envío (asumiendo que tienes helpers "fromId")
