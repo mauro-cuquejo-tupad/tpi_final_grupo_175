@@ -120,6 +120,40 @@ public class EnviosDAO implements GenericDAO<Envios> {
             throw new Exception("Error al actualizar el envío: " + e.getMessage(), e);
         }
     }
+    
+    @Override
+    public void actualizarTx(Envios envio, Connection conn) throws Exception {
+            // NO abre ni cierra la conexión, usa la "conn" recibida
+            try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
+
+                // parámetros
+                pstmt.setString(1, envio.getTracking());
+                pstmt.setInt(2, envio.getEmpresa().getId());
+                pstmt.setInt(3, envio.getTipo().getId());
+                pstmt.setDouble(4, envio.getCosto());
+
+                if (envio.getFechaDespacho() != null) {
+                    pstmt.setDate(5, java.sql.Date.valueOf(envio.getFechaDespacho()));
+                } else {
+                    pstmt.setNull(5, java.sql.Types.DATE);
+                }
+
+                if (envio.getFechaEstimada() != null) {
+                    pstmt.setDate(6, java.sql.Date.valueOf(envio.getFechaEstimada()));
+                } else {
+                    pstmt.setNull(6, java.sql.Types.DATE);
+                }
+
+                pstmt.setInt(7, envio.getEstado().getId());
+                pstmt.setLong(8, envio.getId()); // ID para el WHERE
+
+                int rowsAffected = pstmt.executeUpdate();
+
+                if (rowsAffected == 0) {
+                    throw new SQLException("No se pudo actualizar (Tx) el envío ID: " + envio.getId() + ". Tal vez no existe.");
+                }
+            }
+    }
 
     @Override
     public void eliminarLogico(Long id) throws Exception {
@@ -135,6 +169,18 @@ public class EnviosDAO implements GenericDAO<Envios> {
             throw new Exception("Error al eliminar lógicamente el envío: " + e.getMessage(), e);
         }
     }
+    
+    @Override
+public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+    // NO abrimos conexión, usamos la "conn"
+    try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
+        pstmt.setLong(1, id);
+        if (pstmt.executeUpdate() == 0) {
+            throw new SQLException("No se encontró envío con ID: " + id);
+        }
+    }
+    // NO cerramos la conexión
+}
 
     @Override
     public Envios buscarPorId(Long id) throws Exception {
@@ -218,7 +264,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
             envio.setFechaEstimada(rs.getDate("fecha_estimada").toLocalDate());
         }
 
-        // Mapeo de ID (BD) a Enum (Java) usando método 'fromId'
+        // Mapeo de ID (BD) a Enum (Java) usando método "fromId"
         envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("id_empresa")));
         envio.setTipo(TipoEnvio.fromId(rs.getInt("id_tipo_envio")));
         envio.setEstado(EstadoEnvio.fromId(rs.getInt("id_estado_envio")));

@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
+
 package gestorenvios.dao;
 
 import java.sql.Connection;
@@ -11,7 +8,6 @@ import java.util.List;
  *
  * @author Grupo_175
  * @param <T>
- * @param <K>
  */
 public interface GenericDAO<T> {
 
@@ -20,8 +16,12 @@ public interface GenericDAO<T> {
     public void insertTx(T entidad, Connection conn) throws Exception;
 
     public void actualizar(T entidad) throws Exception;
+    
+    public void actualizarTx(T entidad, Connection conn) throws Exception;
 
     public void eliminarLogico(Long id) throws Exception; // BORRADO LÓGICO. UPDATE
+    
+    public void eliminarLogicoTx(Long id, Connection conn) throws Exception;
 
     T buscarPorId(Long id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
 

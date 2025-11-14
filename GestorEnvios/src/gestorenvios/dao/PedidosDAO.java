@@ -86,6 +86,24 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE AND p.numero = ?";
+    
+    /**
+     * Query para desvincular envio de un pedido
+     */
+    private static final String DESVINCULAR_ENVIO_SQL = "UPDATE Pedido SET id_envio = NULL WHERE id = ?";
+    
+    
+    /**
+     * Query de búsqueda por código de TRACKING del envío asociado.
+     * Filtra por e.tracking (tabla Envio) pero devuelve el Pedido.
+     */
+    private static final String SEARCH_BY_TRACKING_SQL =
+              "SELECT p.id, p.numero, p.fecha, p.clienteNombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+            + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
+            + "e.costo AS envio_costo, e.fechaDespacho AS envio_fechaDespacho, e.fechaEstimada AS envio_fechaEstimada, e.id_estado_envio AS envio_id_estado "
+            + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
+            + "WHERE p.eliminado = 0 AND e.tracking = ?";
+
 
     // inyección de dependencias//
     /**
@@ -119,7 +137,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         // Usamos try-with-resources para la conexión y el statement
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
-            // Llamada al método para setear los VALUES '?'
+            // Llamada al método para setear los VALUES "?"
             setPedidoParameters(pstmt, pedido);
 
             // Ejecuta la inserción
@@ -152,7 +170,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         // Este método asume que la conexión (conn) es manejada 
         // (abierta, cerrada, commit, rollback) por un servicio externo.
         // El try-with-resources SÓLO se aplica al PreparedStatement.
-        // ¡No cierra la 'conn'!
+        // ¡No cierra la "conn"!
         try (PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
             // Reutilizamos el primer método
@@ -165,13 +183,13 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             setGeneratedId(pstmt, pedido);
         }
 
-        // Si ocurre una SQLException, se lanza 'throws Exception'
-        // y el servicio que maneja la transacción deberá hacer un 'rollback'.
+        // Si ocurre una SQLException, se lanza "throws Exception"
+        // y el servicio que maneja la transacción deberá hacer un "rollback".
     }
 
     /**
      * Actualiza un pedido existente en la base de datos. NO actualiza el flag
-     * 'eliminado'.
+     * "eliminado".
      *
      * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
      * eliminado (y no se puede encontrar).
@@ -225,6 +243,39 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             throw new Exception("Error al actualizar el pedido: " + e.getMessage(), e);
         }
     }
+    
+     @Override
+    public void actualizarTx(Pedidos pedido, Connection conn) throws Exception {
+        // NO abre ni cierra la conexión, usa la "conn" recibida
+        try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
+
+            // Seteamos los parámetros del UPDATE
+            pstmt.setString(1, pedido.getNumero());
+            pstmt.setDate(2, java.sql.Date.valueOf(pedido.getFecha()));
+            pstmt.setString(3, pedido.getClienteNombre());
+            pstmt.setDouble(4, pedido.getTotal());
+
+            if (pedido.getEstado() != null) {
+                pstmt.setInt(5, pedido.getEstado().getId());
+            } else {
+                pstmt.setNull(5, java.sql.Types.INTEGER);
+            }
+
+            if (pedido.getEnvio() != null && pedido.getEnvio().getId() != null && pedido.getEnvio().getId() > 0) {
+                pstmt.setLong(6, pedido.getEnvio().getId());
+            } else {
+                pstmt.setNull(6, java.sql.Types.BIGINT);
+            }
+
+            pstmt.setLong(7, pedido.getId()); // ID para el WHERE
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new SQLException("No se pudo actualizar (Tx) el pedido ID: " + pedido.getId() + ".");
+            }
+        }
+    }
 
     /**
      * Elimina lógicamente un pedido (soft delete). Marca eliminado=TRUE sin
@@ -257,6 +308,41 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             throw new Exception("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
         }
     }
+    
+    @Override
+    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+        // NO abre ni cierra la conexión, usa la "conn" recibida
+        try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
+            pstmt.setLong(1, id);
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new SQLException("No se encontró pedido (Tx) con ID: " + id + ".");
+            }
+        }
+    }
+    
+    /**
+     * Método especial para transacciones: Desvincula un envío de un pedido
+     * (SET id_envio = NULL) usando conexión externa.
+     *
+     * @param pedidoId El ID del pedido a modificar.
+     * @param conn La conexión transaccional.
+     * @throws Exception Si falla el UPDATE.
+     */
+    public void desvincularEnvioTx(long pedidoId, Connection conn) throws Exception {
+        try (PreparedStatement pstmt = conn.prepareStatement(DESVINCULAR_ENVIO_SQL)) {
+            pstmt.setLong(1, pedidoId);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected == 0) {
+                // esto puede pasar si el pedido no existe, lo cual no debería
+                // fallar la transacción si la lógica es "asegurar que esté desvinculado".
+                // Pero por consistencia, lanzamos error si no encontró el pedido.
+                throw new SQLException("No se encontró el pedido ID: " + pedidoId + " para desvincular.");
+            }
+        }
+    }
 
     /**
      * Obtiene un pedido por su ID. Incluye su envío asociado mediante LEFT JOIN
@@ -287,7 +373,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             throw new Exception("Error al obtener pedido por ID: " + e.getMessage(), e);
         }
 
-        // Si no se encontró nada, 'if (rs.next())' fue falso y retornamos null
+        // Si no se encontró nada, "if (rs.next())" fue falso y retornamos null
         return null;
     }
 
@@ -328,7 +414,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * Busca pedidos por nombre de cliente con búsqueda flexible (LIKE). Permite
      * búsqueda parcial.
      *
-     * Patrón de búsqueda: LIKE '%filtro%' en clienteNombre
+     * Patrón de búsqueda: LIKE "%filtro%" en clienteNombre
      *
      * @param filtro Texto a buscar en el nombre del cliente (no puede estar
      * vacío)
@@ -394,6 +480,38 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         // No se encontró
         return null;
     }
+    
+    /**
+     * Busca un pedido basándose en el código de tracking de su envío.
+     * Realiza un JOIN y filtra por la tabla Envio.
+     *
+     * @param tracking Código de seguimiento (ej: "TRK-999")
+     * @return El Pedido asociado a ese tracking, o null si no existe.
+     * @throws Exception Si hay error de BD
+     */
+    public Pedidos buscarPorTracking(String tracking) throws Exception {
+        if (tracking == null || tracking.trim().isEmpty()) {
+            throw new IllegalArgumentException("El código de tracking no puede estar vacío");
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_TRACKING_SQL)) {
+
+            // Seteamos el tracking (String)
+            pstmt.setString(1, tracking.trim());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Reutilizamos tu helper mágico mapPedido
+                    return mapPedido(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error al buscar pedido por tracking: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
 
     // OTROS MÉTODOS HELPERS
     /**
@@ -429,7 +547,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
 
     /**
      * Método privado para recuperar el ID autogenerado y guardarlo en el objeto
-     * 'pedido'.
+     * "pedido".
      */
     private void setGeneratedId(PreparedStatement pstmt, Pedidos pedido) throws SQLException {
         // Usamos try-with-resources para el ResultSet
@@ -479,7 +597,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             envio.setTracking(rs.getString("envio_tracking")); // ¡Usa el alias!
             envio.setCosto(rs.getDouble("envio_costo"));       // ¡Usa el alias!
 
-            // Asumiendo que 'fechaDespacho' y 'fechaEstimada' pueden ser nulas
+            // Asumiendo que "fechaDespacho" y "fechaEstimada" pueden ser nulas
             if (rs.getDate("envio_fechaDespacho") != null) {
                 envio.setFechaDespacho(rs.getDate("envio_fechaDespacho").toLocalDate());
             }
@@ -487,7 +605,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
                 envio.setFechaEstimada(rs.getDate("envio_fechaEstimada").toLocalDate());
             }
 
-            // Mapear los Enums de Envío (asumiendo que tienes helpers 'fromId')
+            // Mapear los Enums de Envío (asumiendo que tienes helpers "fromId")
             envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("envio_id_empresa")));
             envio.setTipo(TipoEnvio.fromId(rs.getInt("envio_id_tipo")));
             envio.setEstado(EstadoEnvio.fromId(rs.getInt("envio_id_estado")));
