@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 /**
  * Entidad que representa un Pedido realizado por un cliente.
- *
+ * <p>
  * Campos (según consigna):
  * - id: Long (PK)
  * - eliminado: Boolean (baja lógica)

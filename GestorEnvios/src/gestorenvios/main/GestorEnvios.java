@@ -28,6 +28,11 @@ public class GestorEnvios {
         } catch (Exception e) {
             System.out.println("Error al buscar el envio: " + e.getMessage());
         }
+
+        AppMenu app = new AppMenu();
+        app.run();
+
+
     }
-    
+
 }

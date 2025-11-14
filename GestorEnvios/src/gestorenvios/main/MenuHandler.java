@@ -1,13 +1,9 @@
 package gestorenvios.main;
 
-import gestorenvios.entities.EmpresaEnvio;
-import gestorenvios.entities.Envios;
-import gestorenvios.entities.EstadoEnvio;
-import gestorenvios.entities.EstadoPedido;
-import gestorenvios.entities.Pedidos;
-import gestorenvios.entities.TipoEnvio;
-//import gestorenvios.services.EnvioService;
-//import gestorenvios.services.PedidoService;
+import gestorenvios.entities.*;
+import gestorenvios.services.GenericEnviosService;
+import gestorenvios.services.GenericPedidosService;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -23,17 +19,20 @@ public class MenuHandler {
     private final Scanner scanner;
 
     // Dependencias de la capa Service
-    private final PedidoService pedidoService;
-    private final EnvioService envioService;
+    private final GenericPedidosService<Pedidos> pedidoService;
+    private final GenericEnviosService<Envios> envioService;
 
     /**
      * Constructor con Inyección de Dependencias.
      *
-     * @param scanner El scanner único de la app.
+     * @param scanner       El scanner único de la app.
      * @param pedidoService El servicio que contiene la lógica de pedidos.
-     * @param envioService El servicio que contiene la lógica de envíos.
+     * @param envioService  El servicio que contiene la lógica de envíos.
      */
-    public MenuHandler(Scanner scanner, PedidoService pedidoService, EnvioService envioService) {
+    public MenuHandler(Scanner scanner,
+                       GenericPedidosService<Pedidos> pedidoService,
+                       GenericEnviosService<Envios> envioService) {
+
         this.scanner = scanner;
         this.pedidoService = pedidoService;
         this.envioService = envioService;
@@ -185,7 +184,7 @@ public class MenuHandler {
             System.out.print("Ingrese código de tracking: ");
             String tracking = scanner.nextLine().trim();
 
-            // BÚSQUEDA REAL
+            // BÚSQUEDA REAL TODO: ver si se puede hacer desde la implementación del service.
             Pedidos pedido = pedidoService.buscarPorTracking(tracking);
 
             if (pedido != null) {
@@ -201,7 +200,7 @@ public class MenuHandler {
     }
 
     // MÉTODOS DE GESTIÓN DE ENVÍOS
-    
+
     public void crearEnvioIndependiente() {
         System.out.println("\n--- CREAR ENVÍO INDEPENDIENTE ---");
         try {
@@ -475,6 +474,7 @@ public class MenuHandler {
             System.out.println((i + 1) + ". " + valores[i]);
         }
     }
+
     // --- LECTURA SEGURA ---
     private int leerOpcionEnum(int maxOpcion) {
         while (true) {

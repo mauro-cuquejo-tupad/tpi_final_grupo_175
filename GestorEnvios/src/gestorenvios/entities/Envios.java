@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 /**
  * Entidad que representa un Envío asociado a un Pedido.
- *
+ * <p>
  * Campos (según consigna):
  * - id: Long (PK)
  * - eliminado: Boolean (baja lógica)

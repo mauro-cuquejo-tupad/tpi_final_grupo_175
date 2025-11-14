@@ -5,18 +5,16 @@ import gestorenvios.entities.EmpresaEnvio;
 import gestorenvios.entities.Envios;
 import gestorenvios.entities.EstadoEnvio;
 import gestorenvios.entities.TipoEnvio;
-import java.sql.Statement;
-import java.sql.Connection;
-import java.util.List;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import java.sql.PreparedStatement;
+
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author Grupo_175
  */
+
 /**
  * Data Access Object para la entidad Envíos. Gestiona todas las operaciones de
  * persistencia de envios en la base de datos.
@@ -120,39 +118,39 @@ public class EnviosDAO implements GenericDAO<Envios> {
             throw new Exception("Error al actualizar el envío: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     public void actualizarTx(Envios envio, Connection conn) throws Exception {
-            // NO abre ni cierra la conexión, usa la "conn" recibida
-            try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
+        // NO abre ni cierra la conexión, usa la "conn" recibida
+        try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
-                // parámetros
-                pstmt.setString(1, envio.getTracking());
-                pstmt.setInt(2, envio.getEmpresa().getId());
-                pstmt.setInt(3, envio.getTipo().getId());
-                pstmt.setDouble(4, envio.getCosto());
+            // parámetros
+            pstmt.setString(1, envio.getTracking());
+            pstmt.setInt(2, envio.getEmpresa().getId());
+            pstmt.setInt(3, envio.getTipo().getId());
+            pstmt.setDouble(4, envio.getCosto());
 
-                if (envio.getFechaDespacho() != null) {
-                    pstmt.setDate(5, java.sql.Date.valueOf(envio.getFechaDespacho()));
-                } else {
-                    pstmt.setNull(5, java.sql.Types.DATE);
-                }
-
-                if (envio.getFechaEstimada() != null) {
-                    pstmt.setDate(6, java.sql.Date.valueOf(envio.getFechaEstimada()));
-                } else {
-                    pstmt.setNull(6, java.sql.Types.DATE);
-                }
-
-                pstmt.setInt(7, envio.getEstado().getId());
-                pstmt.setLong(8, envio.getId()); // ID para el WHERE
-
-                int rowsAffected = pstmt.executeUpdate();
-
-                if (rowsAffected == 0) {
-                    throw new SQLException("No se pudo actualizar (Tx) el envío ID: " + envio.getId() + ". Tal vez no existe.");
-                }
+            if (envio.getFechaDespacho() != null) {
+                pstmt.setDate(5, java.sql.Date.valueOf(envio.getFechaDespacho()));
+            } else {
+                pstmt.setNull(5, java.sql.Types.DATE);
             }
+
+            if (envio.getFechaEstimada() != null) {
+                pstmt.setDate(6, java.sql.Date.valueOf(envio.getFechaEstimada()));
+            } else {
+                pstmt.setNull(6, java.sql.Types.DATE);
+            }
+
+            pstmt.setInt(7, envio.getEstado().getId());
+            pstmt.setLong(8, envio.getId()); // ID para el WHERE
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new SQLException("No se pudo actualizar (Tx) el envío ID: " + envio.getId() + ". Tal vez no existe.");
+            }
+        }
     }
 
     @Override
@@ -169,18 +167,18 @@ public class EnviosDAO implements GenericDAO<Envios> {
             throw new Exception("Error al eliminar lógicamente el envío: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
-public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
-    // NO abrimos conexión, usamos la "conn"
-    try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
-        pstmt.setLong(1, id);
-        if (pstmt.executeUpdate() == 0) {
-            throw new SQLException("No se encontró envío con ID: " + id);
+    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+        // NO abrimos conexión, usamos la "conn"
+        try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
+            pstmt.setLong(1, id);
+            if (pstmt.executeUpdate() == 0) {
+                throw new SQLException("No se encontró envío con ID: " + id);
+            }
         }
+        // NO cerramos la conexión
     }
-    // NO cerramos la conexión
-}
 
     @Override
     public Envios buscarPorId(Long id) throws Exception {
@@ -202,8 +200,8 @@ public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
     @Override
     public List<Envios> buscarTodos() throws Exception {
         List<Envios> lista = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL); 
-                ResultSet rs = pstmt.executeQuery()) {
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL);
+             ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 lista.add(mapEnvio(rs));
             }
@@ -214,6 +212,7 @@ public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
     }
 
     // OTROS
+
     /**
      * Setea los parámetros para el INSERT. El parámetro "eliminado" se setea
      * manualmente en el método insert/insertTx. desde el índice 2 en adelante.

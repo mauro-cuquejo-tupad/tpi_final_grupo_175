@@ -1,24 +1,17 @@
 package gestorenvios.dao;
 
 import gestorenvios.config.DatabaseConnection;
-import gestorenvios.entities.EmpresaEnvio;
-import gestorenvios.entities.Envios;
-import gestorenvios.entities.EstadoEnvio;
-import gestorenvios.entities.EstadoPedido;
-import gestorenvios.entities.Pedidos;
-import gestorenvios.entities.TipoEnvio;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.List;
-import java.sql.SQLException;
-import java.sql.ResultSet;
+import gestorenvios.entities.*;
+
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author Grupo_175
  */
+
 /**
  * Data Access Object para la entidad Pedidos. Gestiona todas las operaciones de
  * persistencia de pedidos en la base de datos.
@@ -53,21 +46,22 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "WHERE p.eliminado = FALSE AND p.id = ?";
 
     /*
-         * Query para obtener todos los pedidos activos.
-         * LEFT JOIN con envios para cargar relaciones.
-         * Filtra por eliminado=FALSE (solo pedidos activos).
+     * Query para obtener todos los pedidos activos.
+     * LEFT JOIN con envios para cargar relaciones.
+     * Filtra por eliminado=FALSE (solo pedidos activos).
      */
     private static final String SELECT_ALL_SQL
             = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
             + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
             + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
-            + "WHERE p.eliminado = FALSE";
+            + "WHERE p.eliminado = FALSE "
+            + "LIMIT 10";
 
     /*
-         * Query de búsqueda por cliente_nombre con LIKE.
-         * Permite búsqueda flexible
-         * Solo pedidos activos (eliminado=FALSE).
+     * Query de búsqueda por cliente_nombre con LIKE.
+     * Permite búsqueda flexible
+     * Solo pedidos activos (eliminado=FALSE).
      */
     private static final String SEARCH_BY_NAME_SQL
             = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
@@ -86,23 +80,23 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE AND p.numero = ?";
-    
+
     /**
      * Query para desvincular envio de un pedido
      */
     private static final String DESVINCULAR_ENVIO_SQL = "UPDATE Pedido SET id_envio = NULL WHERE id = ?";
-    
-    
+
+
     /**
      * Query de búsqueda por código de TRACKING del envío asociado.
      * Filtra por e.tracking (tabla Envio) pero devuelve el Pedido.
      */
     private static final String SEARCH_BY_TRACKING_SQL =
-              "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
-            + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
-            + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
-            + "WHERE p.eliminado = 0 AND e.tracking = ?";
+            "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
+                    + "e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
+                    + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
+                    + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
+                    + "WHERE p.eliminado = 0 AND e.tracking = ?";
 
 
     // inyección de dependencias//
@@ -130,8 +124,8 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
 
     /// @param pedido/
     /// @throws java.lang.Exception
-    
-       @Override
+
+    @Override
     public void insertar(Pedidos pedido) throws Exception {
 
         // Usamos try-with-resources para la conexión y el statement
@@ -156,12 +150,12 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * Inserta un pedido dentro de una transacción existente. NO crea nueva
      * conexión, recibe una Connection externa. NO cierra la conexión
      * (responsabilidad del caller, ej. un TransactionManager).
-     *
+     * <p>
      * Usado por: - Operaciones que requieren múltiples inserts coordinados (ej.
      * Pedido + Envío) - Rollback automático si alguna operación falla
      *
      * @param pedido Pedido a insertar
-     * @param conn Conexión transaccional (NO se cierra en este método)
+     * @param conn   Conexión transaccional (NO se cierra en este método)
      * @throws Exception Si falla la inserción
      */
     @Override
@@ -190,10 +184,10 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     /**
      * Actualiza un pedido existente en la base de datos. NO actualiza el flag
      * "eliminado".
-     *
+     * <p>
      * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
      * eliminado (y no se puede encontrar).
-     *
+     * <p>
      * IMPORTANTE: Este método puede cambiar las FKs: - Si pedido.estado == null
      * → id_estado_pedido = NULL (desasociar) - Si pedido.envio == null →
      * id_envio = NULL (desasociar)
@@ -243,8 +237,8 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             throw new Exception("Error al actualizar el pedido: " + e.getMessage(), e);
         }
     }
-    
-     @Override
+
+    @Override
     public void actualizarTx(Pedidos pedido, Connection conn) throws Exception {
         // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
@@ -280,10 +274,10 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     /**
      * Elimina lógicamente un pedido (soft delete). Marca eliminado=TRUE sin
      * borrar físicamente la fila.
-     *
+     * <p>
      * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
      * eliminado
-     *
+     * <p>
      * IMPORTANTE: NO elimina el envío asociado.
      *
      * @param id ID del pedido a eliminar
@@ -308,7 +302,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             throw new Exception("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
         // NO abre ni cierra la conexión, usa la "conn" recibida
@@ -321,19 +315,19 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             }
         }
     }
-    
+
     /**
      * Método especial para transacciones: Desvincula un envío de un pedido
      * (SET id_envio = NULL) usando conexión externa.
      *
      * @param pedidoId El ID del pedido a modificar.
-     * @param conn La conexión transaccional.
+     * @param conn     La conexión transaccional.
      * @throws Exception Si falla el UPDATE.
      */
     public void desvincularEnvioTx(long pedidoId, Connection conn) throws Exception {
         try (PreparedStatement pstmt = conn.prepareStatement(DESVINCULAR_ENVIO_SQL)) {
             pstmt.setLong(1, pedidoId);
-            
+
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected == 0) {
                 // esto puede pasar si el pedido no existe, lo cual no debería
@@ -380,7 +374,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     /**
      * Obtiene todos los pedidos activos (eliminado=FALSE). Incluye sus envíos
      * asociados mediante LEFT JOIN (carga eager).
-     *
+     * <p>
      * Nota: Usa Statement (no PreparedStatement) porque no hay parámetros.
      *
      * @return Lista de pedidos activos con sus envíos (puede estar vacía)
@@ -392,8 +386,8 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         List<Pedidos> pedidos = new ArrayList<>();
 
         // Usamos la constante SELECT_ALL_SQL
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL); 
-                ResultSet rs = pstmt.executeQuery()) {
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL);
+             ResultSet rs = pstmt.executeQuery()) {
 
             // Itera sobre CADA fila del resultado
             while (rs.next()) {
@@ -410,14 +404,15 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     }
 
     // OTROS
+
     /**
      * Busca pedidos por nombre de cliente con búsqueda flexible (LIKE). Permite
      * búsqueda parcial.
-     *
+     * <p>
      * Patrón de búsqueda: LIKE "%filtro%" en clienteNombre
      *
      * @param filtro Texto a buscar en el nombre del cliente (no puede estar
-     * vacío)
+     *               vacío)
      * @return Lista de pedidos que coinciden con el filtro (puede estar vacía)
      * @throws Exception Si hay error de BD
      */
@@ -480,7 +475,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         // No se encontró
         return null;
     }
-    
+
     /**
      * Busca un pedido basándose en el código de tracking de su envío.
      * Realiza un JOIN y filtra por la tabla Envio.
@@ -502,7 +497,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-      
+
                     return mapPedido(rs);
                 }
             }
@@ -514,6 +509,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     }
 
     // OTROS MÉTODOS HELPERS
+
     /**
      * Método privado para "setear" todos los parámetros del PreparedStatement
      * de inserción.

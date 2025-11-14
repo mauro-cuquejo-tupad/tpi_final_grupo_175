@@ -8,7 +8,7 @@ public enum EstadoPedido {
     FACTURADO(2),
     ENVIADO(3);
 
-private final int id;
+    private final int id;
 
     EstadoPedido(int id) {
         this.id = id;
@@ -25,11 +25,9 @@ private final int id;
                 return estado;
             }
         }
-        
+
         throw new IllegalArgumentException("ID de estado de pedido inválido: " + id);
     }
-
-
 
 
 }
