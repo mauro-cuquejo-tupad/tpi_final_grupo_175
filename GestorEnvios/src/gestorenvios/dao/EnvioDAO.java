@@ -22,7 +22,11 @@ import java.util.List;
  */
 public class EnvioDAO implements GenericDAO<Envio> {
 
+    public static final String CAMPOS_ENVIO = " e.id, e.eliminado, e.tracking, e.id_empresa, e.id_tipo_envio, e.costo,"
+            + " e.fecha_despacho, e.fecha_estimada, e.id_estado_envio";
+
     public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
+
     /* Query de inserción. */
     private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -32,24 +36,44 @@ public class EnvioDAO implements GenericDAO<Envio> {
     /* Query de soft delete. */
     private static final String DELETE_SQL = "UPDATE Envio SET eliminado = TRUE WHERE id = ?";
 
-    /* Query SELECT por ID */
-    private static final String SELECT_BY_ID_SQL = "SELECT * FROM Envio WHERE eliminado = FALSE AND id = ?";
-
     /* Query SELECT ALL */
-    private static final String SELECT_ALL_SQL = "SELECT * FROM Envio WHERE eliminado = FALSE";
+    private static final String SELECT_ALL_SQL = "SELECT" + CAMPOS_ENVIO
+            + " FROM Envio e WHERE eliminado = FALSE"
+            + " LIMIT ? OFFSET ?";
+
+    /* Query SELECT por ID */
+    private static final String SELECT_BY_ID_SQL = "SELECT" + CAMPOS_ENVIO
+            + " FROM Envio e WHERE eliminado = FALSE AND id = ?";
+
+    private static final String SELECT_BY_TRACKING_SQL = "SELECT" + CAMPOS_ENVIO
+            + " FROM Envio e WHERE eliminado = FALSE AND tracking = ?";
+
+    private static final String SELECT_BY_NUMERO_SQL = "SELECT " + CAMPOS_ENVIO
+            + " FROM Envio e LEFT JOIN Pedido p  ON p.id_envio = e.id"
+            + " WHERE p.eliminado = 0"
+            + " AND p.numero = ?";
 
 
     @Override
-    public void insertar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
-
+    public void insertar(Envio envio, Connection conn) throws Exception {
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
             setEnvioParameters(pstmt, envio);
-            pstmt.setBoolean(1, false);       // forzamos eliminado = false 
+            pstmt.setBoolean(1, false);       // forzamos eliminado = false
 
             pstmt.executeUpdate();
 
             setGeneratedId(pstmt, envio);     // recuperar ID
 
+        } catch (SQLException e) {
+            throw new Exception("Error al insertar el envío: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void insertar(Envio envio) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            insertar(envio, conn);
         } catch (SQLException e) {
             throw new Exception("Error al insertar el envío: " + e.getMessage(), e);
         }
@@ -80,7 +104,8 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
     @Override
     public void actualizar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
             // no está el campo "eliminado" al principio
             pstmt.setString(1, envio.getTracking());
@@ -193,18 +218,69 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
+    public Envio buscarPorTracking(String tracking) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_TRACKING_SQL)) {
+
+            pstmt.setString(1, tracking);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapEnvio(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error al buscar envío por Tracking: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public Envio buscarPorNumeroPedido(String numero) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_NUMERO_SQL)) {
+
+            pstmt.setString(1, numero);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapEnvio(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error al buscar envío por número de pedido: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
     @Override
     public List<Envio> buscarTodos(Long cantidad, Long pagina) throws Exception {
-        List<Envio> lista = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                lista.add(mapEnvio(rs));
+        // Inicializamos la lista vacía
+        List<Envio> envios = new ArrayList<>();
+
+        // Valores por defecto
+        Long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
+        Long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
+
+        // Calcular el OFFSET (registros a saltar)
+        Long offset = (numeroPagina - 1L) * registrosPorPagina;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL)) {
+            // Seteamos los parámetros LIMIT y OFFSET
+            pstmt.setLong(1, registrosPorPagina); // LIMIT
+            pstmt.setLong(2, offset);              // OFFSET
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // Itera sobre CADA fila del resultado
+                while (rs.next()) {
+                    // Reutilizamos el mismo "mapPedido" para construir el objeto
+                    envios.add(mapEnvio(rs));
+                }
             }
         } catch (SQLException e) {
             throw new Exception("Error al listar envíos: " + e.getMessage(), e);
         }
-        return lista;
+        return envios;
     }
 
     // OTROS

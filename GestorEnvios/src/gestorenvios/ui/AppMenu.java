@@ -1,4 +1,4 @@
-package gestorenvios.main;
+package gestorenvios.ui;
 
 import gestorenvios.dao.EnvioDAO;
 import gestorenvios.dao.PedidoDAO;
@@ -16,7 +16,7 @@ public class AppMenu {
     /**
      * Scanner único compartido por toda la aplicación.
      */
-    private final Scanner scanner;
+    private final InputReader input;
 
     /**
      * Handler que ejecuta las operaciones del menú. Contiene toda la lógica de
@@ -48,19 +48,19 @@ public class AppMenu {
      * correctamente conectadas.
      */
     public AppMenu() {
-        this.scanner = new Scanner(System.in);
 
+        this.input = new ConsoleInputReader(new Scanner(System.in));
 
         GenericPedidosService<Pedido> pedidoService = createPedidoService();
-        GenericEnviosService<Envio> enviosService = crearEnvioService();
+        GenericEnviosService<Envio> enviosService = crearEnvioService(pedidoService);
 
-        this.menuHandler = new MenuHandler(scanner, pedidoService, enviosService);
+        this.menuHandler = new MenuHandler(pedidoService, enviosService, input);
         this.running = true;
     }
 
-    private GenericEnviosService<Envio> crearEnvioService() {
+    private GenericEnviosService<Envio> crearEnvioService(GenericPedidosService<Pedido> pedidoService) {
         EnvioDAO envioDAO = new EnvioDAO();
-        return new EnvioServiceImpl(envioDAO);
+        return new EnvioServiceImpl(envioDAO, pedidoService);
     }
 
     /**
@@ -69,7 +69,7 @@ public class AppMenu {
      *
      * @param args Argumentos de línea de comandos (no usados)
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         AppMenu app = new AppMenu();
         app.run();
     }
@@ -97,13 +97,13 @@ public class AppMenu {
         while (running) {
             try {
                 MenuDisplay.mostrarMenuPrincipal();
-                int opcion = Integer.parseInt(scanner.nextLine());
+                int opcion = Integer.parseInt(input.nextLine());
                 processOption(opcion);
             } catch (NumberFormatException _) {
                 System.out.println("Entrada inválida. Por favor, ingrese un número.");
             }
         }
-        scanner.close();
+        input.close();
     }
 
     /**
@@ -133,20 +133,31 @@ public class AppMenu {
 
     private void processOption(int opcion) {
         switch (opcion) {
+            //pedidos
             case 1 -> menuHandler.crearPedido();
             case 2 -> menuHandler.listarPedidos();
-            case 3 -> menuHandler.actualizarPedido();
-            case 4 -> menuHandler.eliminarPedido();
-            case 5 -> menuHandler.buscarPedidoPorTracking();
-            case 6 -> menuHandler.crearEnvioIndependiente();
-            case 7 -> menuHandler.listarEnvios();
-            case 8 -> menuHandler.actualizarEnvioPorNumero();
-            case 9 -> menuHandler.actualizarEnvioPorId();
-            case 10 -> menuHandler.eliminarEnvioPorId();
-            case 11 -> menuHandler.eliminarEnvioPorNumero();
-            case 12 -> menuHandler.actualizarEnvioPorPedido();
-            case 13 -> menuHandler.eliminarEnvioPorPedido();
+            case 3 -> menuHandler.buscarPedidoPorNumero();
+            case 4 -> menuHandler.buscarPedidoPorTracking();
+            case 5 -> menuHandler.buscarPedidoPorId();
+            case 6 -> menuHandler.actualizarPedidoPorNumero();
+            case 7 -> menuHandler.actualizarPedidoPorId();
+            case 8 -> menuHandler.eliminarPedidoPorNumero();
+            case 9 -> menuHandler.eliminarPedidoPorId();
 
+            //envios
+            case 10 -> menuHandler.crearEnvio();
+            case 11 -> menuHandler.listarEnvios();
+            case 12 -> menuHandler.buscarEnvioPorTracking();
+            case 13 -> menuHandler.buscarEnvioPorNumeroPedido();
+            case 14 -> menuHandler.buscarEnvioPorId();
+            case 15 -> menuHandler.actualizarEnvioPorTracking();
+            case 16 -> menuHandler.actualizarEnvioPorNumeroPedido();
+            case 17 -> menuHandler.actualizarEnvioPorId();
+            case 18 -> menuHandler.eliminarEnvioPorTracking();
+            case 19 -> menuHandler.eliminarEnvioPorNumeroPedido();
+            case 20 -> menuHandler.eliminarEnvioPorId();
+
+            //salir
             case 0 -> {
                 System.out.println("Saliendo...");
                 running = false;
@@ -184,9 +195,7 @@ public class AppMenu {
      */
 
     private GenericPedidosService<Pedido> createPedidoService() {
-        EnvioDAO envioDAO = new EnvioDAO();
-        PedidoDAO pedidoDAO = new PedidoDAO(envioDAO);
-        EnvioServiceImpl envioService = new EnvioServiceImpl(envioDAO);
-        return new PedidoServiceImpl(pedidoDAO, envioService);
+        PedidoDAO pedidoDAO = new PedidoDAO();
+        return new PedidoServiceImpl(pedidoDAO);
     }
 }

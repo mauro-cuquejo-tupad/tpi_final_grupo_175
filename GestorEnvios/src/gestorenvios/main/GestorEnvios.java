@@ -7,6 +7,7 @@ package gestorenvios.main;
 import gestorenvios.config.ApplicationConfig;
 import gestorenvios.dao.EnvioDAO;
 import gestorenvios.dao.PedidoDAO;
+import gestorenvios.ui.AppMenu;
 
 /**
  *
@@ -20,17 +21,6 @@ public class GestorEnvios {
     /**
      */
     static void main() {
-
-        System.out.println(ApplicationConfig.get("db.url"));
-        EnvioDAO envioDAO = new EnvioDAO();
-        PedidoDAO pedidoDAO = new PedidoDAO(envioDAO);
-        try {
-            System.out.println(envioDAO.buscarPorId(5L));
-            System.out.println(pedidoDAO.buscarPorId(7L));
-        } catch (Exception e) {
-            System.out.println("Error al buscar el envio: " + e.getMessage());
-        }
-
         AppMenu app = new AppMenu();
         app.run();
 

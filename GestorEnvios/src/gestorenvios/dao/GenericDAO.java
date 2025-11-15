@@ -1,5 +1,7 @@
 package gestorenvios.dao;
 
+import gestorenvios.entities.Envio;
+
 import java.sql.Connection;
 import java.util.List;
 
@@ -9,6 +11,8 @@ import java.util.List;
  * @author Grupo_175
  */
 public interface GenericDAO<T> {
+
+    void insertar(T entidad, Connection conn) throws Exception;
 
     public void insertar(T entidad) throws Exception;
 

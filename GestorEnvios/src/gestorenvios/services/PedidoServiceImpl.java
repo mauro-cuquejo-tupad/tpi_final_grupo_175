@@ -2,19 +2,17 @@ package gestorenvios.services;
 
 import com.mysql.cj.util.StringUtils;
 import gestorenvios.dao.PedidoDAO;
-import gestorenvios.entities.Envio;
 import gestorenvios.entities.Pedido;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
 public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     PedidoDAO pedidoDAO;
-    GenericService<Envio> envioService;
 
-    public PedidoServiceImpl(PedidoDAO pedidoDAO, GenericService<Envio> envioService) {
+    public PedidoServiceImpl(PedidoDAO pedidoDAO) {
         this.pedidoDAO = pedidoDAO;
-        this.envioService = envioService;
     }
 
     @Override
@@ -36,7 +34,7 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         String[] partes = ultimoPedido.split("-");
         int numero = Integer.parseInt(partes[1]);
         numero++;
-        return String.format("PED-%04d", numero);
+        return String.format("PED-%08d", numero);
     }
 
     private void validarPedido(Pedido pedido) {
@@ -49,19 +47,19 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public List<Pedido> buscarTodos(Long cantidad, Long pagina) {
-        List<Pedido> resultados = List.of();
-        try {
-            resultados = pedidoDAO.buscarTodos(cantidad, pagina);
-        } catch (Exception e) {
-            System.out.println("Falló la búsqueda de pedidos: " + e.getMessage());
-        }
-        return resultados;
+    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws Exception {
+        return pedidoDAO.buscarTodos(cantidad, pagina);
     }
 
     @Override
     public Pedido buscarPorId(Long id) {
         return null;
+    }
+
+    @Override
+    public void actualizar(Pedido pedido, Connection conn) throws Exception {
+        System.out.println("⌛ Actualizando pedido: " + pedido);
+        pedidoDAO.actualizar(pedido, conn);
     }
 
     @Override
@@ -71,8 +69,9 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void eliminar(Long id) {
+    public void eliminar(Long id) throws Exception {
         System.out.println("Eliminando pedido con id: " + id);
+        pedidoDAO.eliminarLogico(id);
     }
 
     @Override
@@ -86,7 +85,7 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public Long obtenerCantidadTotalDePedidos() throws SQLException {
+    public Long obtenerCantidadTotalDePedidos() throws Exception {
         return pedidoDAO.obtenerCantidadTotalDePedidos();
     }
 

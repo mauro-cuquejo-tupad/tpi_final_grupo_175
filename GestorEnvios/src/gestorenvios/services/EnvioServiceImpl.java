@@ -2,15 +2,19 @@ package gestorenvios.services;
 
 import gestorenvios.dao.EnvioDAO;
 import gestorenvios.entities.Envio;
+import gestorenvios.entities.EstadoPedido;
+import gestorenvios.entities.Pedido;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public class EnvioServiceImpl implements GenericEnviosService<Envio> {
     EnvioDAO envioDAO;
+    GenericPedidosService<Pedido> pedidosService;
 
-    public EnvioServiceImpl(EnvioDAO envioDAO) {
+    public EnvioServiceImpl(EnvioDAO envioDAO, GenericPedidosService<Pedido> pedidosService) {
         this.envioDAO = envioDAO;
+        this.pedidosService = pedidosService;
     }
 
     @Override
@@ -21,37 +25,53 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio> {
     }
 
     @Override
-    public List<Envio> buscarTodos(Long cantidad, Long pagina) {
-        return List.of();
+    public List<Envio> buscarTodos(Long cantidad, Long pagina) throws Exception {
+        return envioDAO.buscarTodos(cantidad, pagina);
     }
 
     @Override
-    public Envio buscarPorId(Long id) {
-        return null;
+    public Envio buscarPorId(Long id) throws Exception {
+        return envioDAO.buscarPorId(id);
     }
 
     @Override
-    public void actualizar(Envio pedido) {
-        System.out.println("Actualizando envio: " + pedido);
+    public Envio buscarPorTracking(String tracking) throws Exception {
+        return envioDAO.buscarPorTracking(tracking);
     }
 
     @Override
-    public void eliminar(Long id) {
-        System.out.println("Eliminando envio con id: " + id);
-    }
-
-    @Override
-    public Envio buscarPorTracking(String tracking) {
-        return null;
-    }
-
-    @Override
-    public void eliminarPorTracking(String tracking) {
-        System.out.println("Eliminando envio con tracking: " + tracking);
+    public Envio buscarPorNumeroPedido(String numero) throws Exception {
+        return envioDAO.buscarPorNumeroPedido(numero);
     }
 
     @Override
     public Long obtenerCantidadTotalDeEnvios() throws SQLException {
         return envioDAO.obtenerCantidadTotalDeEnvios();
+    }
+
+    @Override
+    public void actualizar(Envio envio) throws Exception {
+        envioDAO.actualizar(envio);
+    }
+
+    @Override
+    public void eliminar(Long id) throws Exception {
+        envioDAO.eliminarLogico(id);
+    }
+
+    @Override
+    public Long crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws Exception {
+        ManejadorTransaccionesImpl transactionManager = new ManejadorTransaccionesImpl();
+        transactionManager.execute(conn -> {
+            //primero creo el envio
+            envioDAO.insertar(envio, conn);
+            //actualizo el pedido con el envio creado
+            pedido.setEnvio(envio);
+            //actualizo el estado del pedido
+            pedido.setEstado(EstadoPedido.ENVIADO);
+            pedidosService.actualizar(pedido, conn);
+            return null;
+        });
+        return 0L;
     }
 }
