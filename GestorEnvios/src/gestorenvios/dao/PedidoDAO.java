@@ -2,6 +2,7 @@ package gestorenvios.dao;
 
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.entities.*;
+import gestorenvios.models.exceptions.CreacionPedidoException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -17,8 +18,9 @@ import java.util.List;
  * persistencia de pedidos en la base de datos.
  *
  */
-public class PedidosDAO implements GenericDAO<Pedidos> {
+public class PedidoDAO implements GenericDAO<Pedido> {
 
+    public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Pedido WHERE eliminado = FALSE";
     /* Query de inserción de pedido.*/
     private static final String INSERT_SQL = "INSERT INTO Pedido (numero, fecha, cliente_nombre, total, id_estado_pedido, id_envio) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -33,6 +35,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * fila. Preserva integridad referencial y datos históricos.
      */
     private static final String DELETE_SQL = "UPDATE Pedido SET eliminado = TRUE WHERE id = ?";
+    private static final String DELETE_SQL_POR_NUMERO = "UPDATE Pedido SET eliminado = TRUE WHERE numero = ?";
 
     /**
      * Query para obtener pedido por ID. LEFT JOIN con envio para cargar la
@@ -46,9 +49,10 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "WHERE p.eliminado = FALSE AND p.id = ?";
 
     /*
-     * Query para obtener todos los pedidos activos.
+     * Query para obtener todos los pedidos activos con paginación.
      * LEFT JOIN con envios para cargar relaciones.
      * Filtra por eliminado=FALSE (solo pedidos activos).
+     * Usa LIMIT y OFFSET para paginación dinámica.
      */
     private static final String SELECT_ALL_SQL
             = "SELECT p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio, "
@@ -56,7 +60,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado "
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE "
-            + "LIMIT 10";
+            + "LIMIT ? OFFSET ?";
 
     /*
      * Query de búsqueda por cliente_nombre con LIKE.
@@ -81,6 +85,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             + "FROM Pedido p LEFT JOIN Envio e ON p.id_envio = e.id "
             + "WHERE p.eliminado = FALSE AND p.numero = ?";
 
+    private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) numero AS max_numero FROM Pedido";
     /**
      * Query para desvincular envio de un pedido
      */
@@ -105,20 +110,20 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * futuras). Inyectado en el constructor por si se necesita coordinar
      * operaciones.
      */
-    private final EnviosDAO enviosDAO;
+    private final EnvioDAO envioDAO;
 
     /**
      * Constructor con inyección de EnviosDAO. Valida que la dependencia no sea
      * null (fail-fast).
      *
-     * @param enviosDAO DAO de envios
+     * @param envioDAO DAO de envios
      * @throws IllegalArgumentException si domicilioDAO es null
      */
-    public PedidosDAO(EnviosDAO enviosDAO) {
-        if (enviosDAO == null) {
+    public PedidoDAO(EnvioDAO envioDAO) {
+        if (envioDAO == null) {
             throw new IllegalArgumentException("EnviosDAO no puede ser null");
         }
-        this.enviosDAO = enviosDAO;
+        this.envioDAO = envioDAO;
 
     }
 
@@ -126,7 +131,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     /// @throws java.lang.Exception
 
     @Override
-    public void insertar(Pedidos pedido) throws Exception {
+    public void insertar(Pedido pedido) throws Exception {
 
         // Usamos try-with-resources para la conexión y el statement
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
@@ -141,8 +146,8 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             setGeneratedId(pstmt, pedido);
 
         } catch (SQLException e) {
-            // Captura el error de SQL y lo relanza como una excepción genérica
-            throw new Exception("Error al insertar el pedido: " + e.getMessage(), e);
+            // Captura el error de SQL y lo relanza como una excepción específica
+            throw new CreacionPedidoException("Error al insertar el pedido: " + e.getMessage());
         }
     }
 
@@ -159,7 +164,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @throws Exception Si falla la inserción
      */
     @Override
-    public void insertTx(Pedidos pedido, Connection conn) throws Exception {
+    public void insertTx(Pedido pedido, Connection conn) throws Exception {
 
         // Este método asume que la conexión (conn) es manejada 
         // (abierta, cerrada, commit, rollback) por un servicio externo.
@@ -196,10 +201,11 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @throws Exception Si el pedido no existe o hay error de BD
      */
     @Override
-    public void actualizar(Pedidos pedido) throws Exception {
+    public void actualizar(Pedido pedido) throws Exception {
 
         // El try-with-resources para la conexión y el statement
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
             // Seteamos los parámetros del UPDATE
             pstmt.setString(1, pedido.getNumero());
@@ -239,7 +245,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     }
 
     @Override
-    public void actualizarTx(Pedidos pedido, Connection conn) throws Exception {
+    public void actualizarTx(Pedido pedido, Connection conn) throws Exception {
         // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
@@ -303,6 +309,38 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         }
     }
 
+    /**
+     * Elimina lógicamente un pedido (soft delete). Marca eliminado=TRUE sin
+     * borrar físicamente la fila.
+     * <p>
+     * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
+     * eliminado
+     * <p>
+     * IMPORTANTE: NO elimina el envío asociado.
+     *
+     * @param numero numero del pedido a eliminar
+     * @throws Exception Si el pedido no existe o hay error de BD
+     */
+    public void eliminarLogicoPorNumero(String numero) throws Exception {
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL_POR_NUMERO)) {
+
+            pstmt.setString(1, numero);
+
+            // Ejecutamos el UPDATE
+            int rowsAffected = pstmt.executeUpdate();
+
+            // Si no se actualizó ninguna fila, es que no se encontró el ID
+            if (rowsAffected == 0) {
+                throw new SQLException("No se encontró pedido con Numero: " + numero + " (o ya estaba eliminado).");
+            }
+        } catch (SQLException e) {
+            // Captura y relanza cualquier error de SQL
+            throw new Exception("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
         // NO abre ni cierra la conexión, usa la "conn" recibida
@@ -348,7 +386,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @throws Exception Si hay error de BD (captura SQLException y re-lanza)
      */
     @Override
-    public Pedidos buscarPorId(Long id) throws Exception {
+    public Pedido buscarPorId(Long id) throws Exception {
 
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -372,27 +410,40 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
     }
 
     /**
-     * Obtiene todos los pedidos activos (eliminado=FALSE). Incluye sus envíos
-     * asociados mediante LEFT JOIN (carga eager).
-     * <p>
-     * Nota: Usa Statement (no PreparedStatement) porque no hay parámetros.
+     * Obtiene todos los pedidos activos (eliminado=FALSE) con paginación.
+     * Incluye sus envíos asociados mediante LEFT JOIN (carga eager).
      *
+     * @param cantidad Número de registros por página (si es null, usa 10 por defecto)
+     * @param pagina   Número de página (1-indexed, si es null, usa 1 por defecto)
      * @return Lista de pedidos activos con sus envíos (puede estar vacía)
      * @throws Exception Si hay error de BD
      */
     @Override
-    public List<Pedidos> buscarTodos() throws Exception {
+    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws Exception {
         // Inicializamos la lista vacía
-        List<Pedidos> pedidos = new ArrayList<>();
+        List<Pedido> pedidos = new ArrayList<>();
 
-        // Usamos la constante SELECT_ALL_SQL
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL);
-             ResultSet rs = pstmt.executeQuery()) {
+        // Valores por defecto
+        Long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
+        Long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
 
-            // Itera sobre CADA fila del resultado
-            while (rs.next()) {
-                // Reutilizamos el mismo "mapPedido" para construir el objeto
-                pedidos.add(mapPedido(rs));
+        // Calcular el OFFSET (registros a saltar)
+        Long offset = (numeroPagina - 1L) * registrosPorPagina;
+
+        // Usamos la constante SELECT_ALL_SQL con parámetros
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL)) {
+
+            // Seteamos los parámetros LIMIT y OFFSET
+            pstmt.setLong(1, registrosPorPagina); // LIMIT
+            pstmt.setLong(2, offset);              // OFFSET
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // Itera sobre CADA fila del resultado
+                while (rs.next()) {
+                    // Reutilizamos el mismo "mapPedido" para construir el objeto
+                    pedidos.add(mapPedido(rs));
+                }
             }
         } catch (SQLException e) {
             // verificamos el error
@@ -416,12 +467,12 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @return Lista de pedidos que coinciden con el filtro (puede estar vacía)
      * @throws Exception Si hay error de BD
      */
-    public List<Pedidos> buscarPorClienteNombre(String filtro) throws Exception {
+    public List<Pedido> buscarPorClienteNombre(String filtro) throws Exception {
         if (filtro == null || filtro.trim().isEmpty()) {
             throw new IllegalArgumentException("El filtro de búsqueda no puede estar vacío");
         }
 
-        List<Pedidos> pedidos = new ArrayList<>();
+        List<Pedido> pedidos = new ArrayList<>();
 
         // Usamos la constante SEARCH_BY_NAME_SQL
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NAME_SQL)) {
@@ -451,13 +502,14 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @return Pedido con ese número, o null si no existe o está eliminado
      * @throws Exception Si hay error de BD
      */
-    public Pedidos buscarPorNumero(String numero) throws Exception {
+    public Pedido buscarPorNumero(String numero) throws Exception {
         if (numero == null || numero.trim().isEmpty()) {
             throw new IllegalArgumentException("El número de pedido no puede estar vacío");
         }
 
         // Usamos la constante
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NUMERO_SQL)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NUMERO_SQL)) {
 
             // Seteamos el número exacto
             pstmt.setString(1, numero.trim());
@@ -484,7 +536,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @return El Pedido asociado a ese tracking, o null si no existe.
      * @throws Exception Si hay error de BD
      */
-    public Pedidos buscarPorTracking(String tracking) throws Exception {
+    public Pedido buscarPorTracking(String tracking) throws Exception {
         if (tracking == null || tracking.trim().isEmpty()) {
             throw new IllegalArgumentException("El código de tracking no puede estar vacío");
         }
@@ -514,7 +566,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * Método privado para "setear" todos los parámetros del PreparedStatement
      * de inserción.
      */
-    private void setPedidoParameters(PreparedStatement pstmt, Pedidos pedido) throws SQLException {
+    private void setPedidoParameters(PreparedStatement pstmt, Pedido pedido) throws SQLException {
 
         pstmt.setString(1, pedido.getNumero());
 
@@ -545,7 +597,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * Método privado para recuperar el ID autogenerado y guardarlo en el objeto
      * "pedido".
      */
-    private void setGeneratedId(PreparedStatement pstmt, Pedidos pedido) throws SQLException {
+    private void setGeneratedId(PreparedStatement pstmt, Pedido pedido) throws SQLException {
         // Usamos try-with-resources para el ResultSet
         try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
             if (generatedKeys.next()) {
@@ -563,10 +615,10 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
      * @return Un objeto Pedidos completamente populado
      * @throws SQLException
      */
-    private Pedidos mapPedido(ResultSet rs) throws Exception {
+    private Pedido mapPedido(ResultSet rs) throws Exception {
 
         // --- Mapeamos la entidad principal: Pedidos ---
-        Pedidos pedido = new Pedidos();
+        Pedido pedido = new Pedido();
         pedido.setId(rs.getLong("id"));
         pedido.setNumero(rs.getString("numero"));
         pedido.setFecha(rs.getDate("fecha").toLocalDate()); // Convertir sql.Date a time.LocalDate
@@ -588,7 +640,7 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
             pedido.setEnvio(null);
         } else {
             // ¡Sí encontramos un envío! Lo construimos.
-            Envios envio = new Envios();
+            Envio envio = new Envio();
             envio.setId(idEnvio);
             envio.setTracking(rs.getString("envio_tracking")); // ¡Usa el alias!
             envio.setCosto(rs.getDouble("envio_costo"));       // ¡Usa el alias!
@@ -614,4 +666,29 @@ public class PedidosDAO implements GenericDAO<Pedidos> {
         return pedido;
     }
 
+    public String buscarUltimoNumeroPedido() throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SEARCH_MAX_NUMERO_PEDIDO)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+
+                    return rs.getString("numero");
+                }
+            }
+        }
+        return null;
+        }
+
+    public Long obtenerCantidadTotalDePedidos() throws SQLException {
+        Long cantidad = 0L;
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                cantidad = rs.getLong("total");
+            }
+        }
+        return cantidad;
+    }
 }

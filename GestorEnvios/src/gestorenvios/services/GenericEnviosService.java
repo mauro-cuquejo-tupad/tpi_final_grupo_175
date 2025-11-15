@@ -1,5 +1,11 @@
 package gestorenvios.services;
 
-public interface GenericEnviosService<T> extends GenericService<T> {
+import java.sql.SQLException;
 
+public interface GenericEnviosService<T> extends GenericService<T> {
+    T buscarPorTracking(String tracking);
+
+    void eliminarPorTracking(String tracking);
+
+    Long obtenerCantidadTotalDeEnvios() throws SQLException;
 }

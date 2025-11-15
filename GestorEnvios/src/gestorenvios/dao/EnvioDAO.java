@@ -2,7 +2,7 @@ package gestorenvios.dao;
 
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.entities.EmpresaEnvio;
-import gestorenvios.entities.Envios;
+import gestorenvios.entities.Envio;
 import gestorenvios.entities.EstadoEnvio;
 import gestorenvios.entities.TipoEnvio;
 
@@ -20,8 +20,9 @@ import java.util.List;
  * persistencia de envios en la base de datos.
  *
  */
-public class EnviosDAO implements GenericDAO<Envios> {
+public class EnvioDAO implements GenericDAO<Envio> {
 
+    public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
     /* Query de inserción. */
     private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -37,14 +38,9 @@ public class EnviosDAO implements GenericDAO<Envios> {
     /* Query SELECT ALL */
     private static final String SELECT_ALL_SQL = "SELECT * FROM Envio WHERE eliminado = FALSE";
 
-    /**
-     * Constructor vacío.
-     */
-    public EnviosDAO() {
-    }
 
     @Override
-    public void insertar(Envios envio) throws Exception {
+    public void insertar(Envio envio) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
             setEnvioParameters(pstmt, envio);
@@ -68,7 +64,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
      * @throws java.lang.Exception
      */
     @Override
-    public void insertTx(Envios envio, Connection conn) throws Exception {
+    public void insertTx(Envio envio, Connection conn) throws Exception {
         // No cerramos conexión 
         try (PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -83,7 +79,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
     }
 
     @Override
-    public void actualizar(Envios envio) throws Exception {
+    public void actualizar(Envio envio) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
             // no está el campo "eliminado" al principio
@@ -120,7 +116,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
     }
 
     @Override
-    public void actualizarTx(Envios envio, Connection conn) throws Exception {
+    public void actualizarTx(Envio envio, Connection conn) throws Exception {
         // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
@@ -181,7 +177,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
     }
 
     @Override
-    public Envios buscarPorId(Long id) throws Exception {
+    public Envio buscarPorId(Long id) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
             pstmt.setLong(1, id);
@@ -198,8 +194,8 @@ public class EnviosDAO implements GenericDAO<Envios> {
     }
 
     @Override
-    public List<Envios> buscarTodos() throws Exception {
-        List<Envios> lista = new ArrayList<>();
+    public List<Envio> buscarTodos(Long cantidad, Long pagina) throws Exception {
+        List<Envio> lista = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
@@ -217,7 +213,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
      * Setea los parámetros para el INSERT. El parámetro "eliminado" se setea
      * manualmente en el método insert/insertTx. desde el índice 2 en adelante.
      */
-    private void setEnvioParameters(PreparedStatement pstmt, Envios envio) throws SQLException {
+    private void setEnvioParameters(PreparedStatement pstmt, Envio envio) throws SQLException {
 
         pstmt.setString(2, envio.getTracking());
 
@@ -240,7 +236,7 @@ public class EnviosDAO implements GenericDAO<Envios> {
         pstmt.setInt(8, envio.getEstado().getId());
     }
 
-    private void setGeneratedId(PreparedStatement pstmt, Envios envio) throws SQLException {
+    private void setGeneratedId(PreparedStatement pstmt, Envio envio) throws SQLException {
         try (ResultSet rs = pstmt.getGeneratedKeys()) {
             if (rs.next()) {
                 envio.setId(rs.getLong(1));
@@ -248,8 +244,8 @@ public class EnviosDAO implements GenericDAO<Envios> {
         }
     }
 
-    private Envios mapEnvio(ResultSet resultSet) throws Exception {
-        Envios envio = new Envios();
+    private Envio mapEnvio(ResultSet resultSet) throws Exception {
+        Envio envio = new Envio();
 
         envio.setId(resultSet.getLong("id"));
         envio.setEliminado(resultSet.getBoolean("eliminado"));
@@ -269,5 +265,21 @@ public class EnviosDAO implements GenericDAO<Envios> {
         envio.setEstado(EstadoEnvio.fromId(resultSet.getInt("id_estado_envio")));
 
         return envio;
+    }
+
+    public Long obtenerCantidadTotalDeEnvios() throws SQLException {
+        Long total = 0L;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                total = rs.getLong("total");
+            }
+
+        }
+
+        return total;
     }
 }

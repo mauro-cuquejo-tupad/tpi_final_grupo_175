@@ -1,9 +1,9 @@
 package gestorenvios.main;
 
-import gestorenvios.dao.EnviosDAO;
-import gestorenvios.dao.PedidosDAO;
-import gestorenvios.entities.Envios;
-import gestorenvios.entities.Pedidos;
+import gestorenvios.dao.EnvioDAO;
+import gestorenvios.dao.PedidoDAO;
+import gestorenvios.entities.Envio;
+import gestorenvios.entities.Pedido;
 import gestorenvios.services.EnvioServiceImpl;
 import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
@@ -51,15 +51,15 @@ public class AppMenu {
         this.scanner = new Scanner(System.in);
 
 
-        GenericPedidosService<Pedidos> pedidoService = createPedidoService();
-        GenericEnviosService<Envios> enviosService = crearEnvioService();
+        GenericPedidosService<Pedido> pedidoService = createPedidoService();
+        GenericEnviosService<Envio> enviosService = crearEnvioService();
 
         this.menuHandler = new MenuHandler(scanner, pedidoService, enviosService);
         this.running = true;
     }
 
-    private GenericEnviosService<Envios> crearEnvioService() {
-        EnviosDAO envioDAO = new EnviosDAO();
+    private GenericEnviosService<Envio> crearEnvioService() {
+        EnvioDAO envioDAO = new EnvioDAO();
         return new EnvioServiceImpl(envioDAO);
     }
 
@@ -99,7 +99,7 @@ public class AppMenu {
                 MenuDisplay.mostrarMenuPrincipal();
                 int opcion = Integer.parseInt(scanner.nextLine());
                 processOption(opcion);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.out.println("Entrada inválida. Por favor, ingrese un número.");
             }
         }
@@ -137,13 +137,16 @@ public class AppMenu {
             case 2 -> menuHandler.listarPedidos();
             case 3 -> menuHandler.actualizarPedido();
             case 4 -> menuHandler.eliminarPedido();
-            case 5 -> menuHandler.crearEnvioIndependiente();
-            case 6 -> menuHandler.listarEnvios();
-            case 7 -> menuHandler.actualizarEnvioPorId();
-            case 8 -> menuHandler.eliminarEnvioPorId();
-            case 9 -> menuHandler.actualizarEnvioPorPedido();
-            case 10 -> menuHandler.eliminarEnvioPorPedido();
-            case 11 -> menuHandler.buscarPedidoPorTracking();
+            case 5 -> menuHandler.buscarPedidoPorTracking();
+            case 6 -> menuHandler.crearEnvioIndependiente();
+            case 7 -> menuHandler.listarEnvios();
+            case 8 -> menuHandler.actualizarEnvioPorNumero();
+            case 9 -> menuHandler.actualizarEnvioPorId();
+            case 10 -> menuHandler.eliminarEnvioPorId();
+            case 11 -> menuHandler.eliminarEnvioPorNumero();
+            case 12 -> menuHandler.actualizarEnvioPorPedido();
+            case 13 -> menuHandler.eliminarEnvioPorPedido();
+
             case 0 -> {
                 System.out.println("Saliendo...");
                 running = false;
@@ -180,9 +183,9 @@ public class AppMenu {
      * dependencias
      */
 
-    private GenericPedidosService<Pedidos> createPedidoService() {
-        EnviosDAO envioDAO = new EnviosDAO();
-        PedidosDAO pedidoDAO = new PedidosDAO(envioDAO);
+    private GenericPedidosService<Pedido> createPedidoService() {
+        EnvioDAO envioDAO = new EnvioDAO();
+        PedidoDAO pedidoDAO = new PedidoDAO(envioDAO);
         EnvioServiceImpl envioService = new EnvioServiceImpl(envioDAO);
         return new PedidoServiceImpl(pedidoDAO, envioService);
     }

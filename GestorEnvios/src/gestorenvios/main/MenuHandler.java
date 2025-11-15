@@ -19,8 +19,8 @@ public class MenuHandler {
     private final Scanner scanner;
 
     // Dependencias de la capa Service
-    private final GenericPedidosService<Pedidos> pedidoService;
-    private final GenericEnviosService<Envios> envioService;
+    private final GenericPedidosService<Pedido> pedidoService;
+    private final GenericEnviosService<Envio> envioService;
 
     /**
      * Constructor con Inyección de Dependencias.
@@ -30,8 +30,8 @@ public class MenuHandler {
      * @param envioService  El servicio que contiene la lógica de envíos.
      */
     public MenuHandler(Scanner scanner,
-                       GenericPedidosService<Pedidos> pedidoService,
-                       GenericEnviosService<Envios> envioService) {
+                       GenericPedidosService<Pedido> pedidoService,
+                       GenericEnviosService<Envio> envioService) {
 
         this.scanner = scanner;
         this.pedidoService = pedidoService;
@@ -43,35 +43,19 @@ public class MenuHandler {
         try {
             System.out.println("\n--- CREAR NUEVO PEDIDO ---");
 
-            // Captura de datos
-            System.out.print("Número de Pedido (ej. PED-001): ");
-            String numero = scanner.nextLine().trim();
-
             System.out.print("Nombre del Cliente: ");
             String cliente = scanner.nextLine().trim();
 
             double total = leerDouble("Total del pedido: ");
-            LocalDate fecha = leerFecha("Fecha del pedido (AAAA-MM-DD): ");
-
-            EstadoPedido estado = elegirEstadoPedido();
 
             // Construcción
-            Pedidos pedido = new Pedidos();
-            pedido.setNumero(numero);
+            Pedido pedido = new Pedido();
             pedido.setClienteNombre(cliente);
             pedido.setTotal(total);
-            pedido.setFecha(fecha);
-            pedido.setEstado(estado);
-
-            // Gestión del Envío opcional
-            System.out.print("¿Desea agregar un envío a este pedido? (s/n): ");
-            if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
-                Envios envio = crearEnvioEnMemoria();
-                pedido.setEnvio(envio);
-            }
+            pedido.setFecha(LocalDate.now());
+            pedido.setEstado(EstadoPedido.NUEVO); //NUEVO
 
             // Llamada al Service
-            ///////// El Service decidirá si llamar a 'insertar' o 'insertTx' según si tiene envío
             pedidoService.crear(pedido);
 
             System.out.println("✅ Pedido creado exitosamente.");
@@ -84,31 +68,50 @@ public class MenuHandler {
     public void listarPedidos() {
         System.out.println("\n--- LISTA DE PEDIDOS ---");
         try {
-            List<Pedidos> lista = pedidoService.buscarTodos();
+            Long cantidadPedidos = pedidoService.obtenerCantidadTotalDePedidos();
+            System.out.println("Total de pedidos registrados: " + cantidadPedidos);
 
-            if (lista.isEmpty()) {
+            if (cantidadPedidos == 0) {
                 System.out.println("No hay pedidos registrados.");
-            } else {
-                for (Pedidos p : lista) {
+                return;
+            }
+
+            Long pedidosPorPagina = 50L;
+            Long pagina = 1L;
+
+            do {
+                List<Pedido> lista = pedidoService.buscarTodos(pedidosPorPagina, pagina);
+                if (lista.isEmpty()) break;
+
+                lista.forEach(p -> {
                     System.out.println(p);
                     if (p.getEnvio() != null) {
                         System.out.println("   ↳ Con Envío: " + p.getEnvio().getTracking());
                     }
-                }
-            }
+                });
+
+                if (cantidadPedidos <= pedidosPorPagina * pagina) break;
+
+                System.out.print("Presione Enter para ver más o 'q' para salir: ");
+                String input = scanner.nextLine().trim();
+                if (input.equalsIgnoreCase("q")) break;
+
+                pagina++;
+            } while (true);
+
         } catch (Exception e) {
-            System.out.println("❌ Error al listar: " + e.getMessage());
+            System.out.println("❌ Error al listar pedidos: " + e.getMessage());
         }
     }
 
     public void actualizarPedido() {
         System.out.println("\n--- ACTUALIZAR PEDIDO ---");
         try {
-            System.out.print("Ingrese ID del pedido a modificar: ");
-            Long id = leerLong();
+            System.out.print("Ingrese Numero de pedido a modificar (PED-XXXXXXXX): ");
+            String numero = leerNumeroPedido();
 
             // buscamos si existe
-            Pedidos pedido = pedidoService.buscarPorId(id);
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
             if (pedido == null) {
                 System.out.println("Pedido no encontrado.");
                 return;
@@ -165,11 +168,11 @@ public class MenuHandler {
     public void eliminarPedido() {
         System.out.println("\n--- ELIMINAR PEDIDO ---");
         try {
-            System.out.print("Ingrese ID del pedido a eliminar: ");
-            Long id = leerLong();
+            System.out.print("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX): ");
+            String numero = leerNumeroPedido();
 
             // Llamada al Service (Soft Delete)
-            pedidoService.eliminar(id);
+            pedidoService.eliminarPorNumero(numero);
 
             System.out.println("✅ Pedido eliminado correctamente.");
 
@@ -185,7 +188,7 @@ public class MenuHandler {
             String tracking = scanner.nextLine().trim();
 
             // BÚSQUEDA REAL TODO: ver si se puede hacer desde la implementación del service.
-            Pedidos pedido = pedidoService.buscarPorTracking(tracking);
+            Pedido pedido = pedidoService.buscarPorNumeroTracking(tracking);
 
             if (pedido != null) {
                 System.out.println("✅ ¡Pedido Encontrado!");
@@ -204,7 +207,7 @@ public class MenuHandler {
     public void crearEnvioIndependiente() {
         System.out.println("\n--- CREAR ENVÍO INDEPENDIENTE ---");
         try {
-            Envios envio = crearEnvioEnMemoria();
+            Envio envio = crearEnvioEnMemoria();
 
             envioService.crear(envio);
 
@@ -217,15 +220,37 @@ public class MenuHandler {
     public void listarEnvios() {
         System.out.println("\n--- LISTA DE ENVÍOS ---");
         try {
-            List<Envios> lista = envioService.buscarTodos();
+            Long cantidadTotalDeEnvios = envioService.obtenerCantidadTotalDeEnvios();
+            System.out.println("Total de envíos registrados: " + cantidadTotalDeEnvios);
 
-            if (lista.isEmpty()) {
+            if (cantidadTotalDeEnvios == 0) {
                 System.out.println("No hay envíos registrados.");
-            } else {
-                for (Envios e : lista) {
-                    System.out.println(e); // asume toString() en Envios
-                }
+                return;
             }
+
+            Long enviosPorPagina = 50L;
+            Long pagina = 1L;
+
+            do {
+                List<Envio> lista = envioService.buscarTodos(enviosPorPagina, pagina);
+                if (lista.isEmpty()) break;
+
+                lista.forEach(p -> {
+                    System.out.println(p);
+                    for (Envio e : lista) {
+                        System.out.println(e); // asume toString() en Envios
+                    }
+                });
+
+                if (cantidadTotalDeEnvios <= enviosPorPagina * pagina) break;
+
+                System.out.print("Presione Enter para ver más o 'q' para salir: ");
+                String input = scanner.nextLine().trim();
+                if (input.equalsIgnoreCase("q")) break;
+
+                pagina++;
+            } while (true);
+
         } catch (Exception e) {
             System.out.println("❌ Error al listar envíos: " + e.getMessage());
         }
@@ -238,7 +263,7 @@ public class MenuHandler {
             Long id = leerLong();
 
             // Llamada al Service
-            Envios envio = envioService.buscarPorId(id);
+            Envio envio = envioService.buscarPorId(id);
 
             if (envio == null) {
                 System.out.println("❌ No se encontró ningún envío con ese ID.");
@@ -312,7 +337,7 @@ public class MenuHandler {
             Long id = leerLong();
 
             // buscar si existe antes de intentar borrar
-            Envios envio = envioService.buscarPorId(id);
+            Envio envio = envioService.buscarPorId(id);
             if (envio == null) {
                 System.out.println("❌ El envío no existe.");
                 return;
@@ -340,7 +365,7 @@ public class MenuHandler {
             Long idPedido = leerLong();
 
             // Buscar Pedido 
-            Pedidos pedido = pedidoService.buscarPorId(idPedido);
+            Pedido pedido = pedidoService.buscarPorId(idPedido);
 
             if (pedido == null) {
                 System.out.println("❌ Pedido no encontrado.");
@@ -354,7 +379,7 @@ public class MenuHandler {
                 return;
             }
 
-            Envios envio = pedido.getEnvio();
+            Envio envio = pedido.getEnvio();
             System.out.println("-> Envío encontrado: " + envio.getTracking());
 
             // Lógica de actualización
@@ -392,7 +417,7 @@ public class MenuHandler {
             Long idPedido = leerLong();
 
             // Verificación de existencia
-            Pedidos pedido = pedidoService.buscarPorId(idPedido);
+            Pedido pedido = pedidoService.buscarPorId(idPedido);
             if (pedido == null) {
                 System.out.println("❌ Pedido no encontrado.");
                 return;
@@ -419,9 +444,9 @@ public class MenuHandler {
     }
 
     // AUXILIARES
-    private Envios crearEnvioEnMemoria() {
+    private Envio crearEnvioEnMemoria() {
         System.out.println("\n... Configurando datos del Envío ...");
-        Envios envio = new Envios();
+        Envio envio = new Envio();
 
         System.out.print("Número de Tracking: ");
         envio.setTracking(scanner.nextLine().trim());
@@ -497,7 +522,18 @@ public class MenuHandler {
                 System.out.print(mensaje);
                 return Double.parseDouble(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.println("Error: Ingrese un número válido.");
+                System.out.println("Error: Ingrese un monto válido.");
+            }
+        }
+    }
+
+    private String leerNumeroPedido() {
+        while (true) {
+            String entrada = scanner.nextLine();
+            if (entrada.matches("PED-\\d{8}")) {
+                return entrada;
+            } else {
+                System.out.print("Error: Formato inválido. Use PED-XXXXXXXX. Intente nuevamente: ");
             }
         }
     }
@@ -518,9 +554,17 @@ public class MenuHandler {
             try {
                 System.out.print(mensaje);
                 return LocalDate.parse(scanner.nextLine().trim());
-            } catch (DateTimeParseException e) {
+            } catch (DateTimeParseException _) {
                 System.out.println("Error: Formato inválido. Use AAAA-MM-DD.");
             }
         }
+    }
+
+    public void actualizarEnvioPorNumero() {
+        System.out.println("\n--- ACTUALIZAR ENVÍO POR NÚMERO DE TRACKING ---");
+    }
+
+    public void eliminarEnvioPorNumero() {
+        System.out.println("\n--- ELIMINAR ENVÍO POR NÚMERO DE TRACKING ---");
     }
 }

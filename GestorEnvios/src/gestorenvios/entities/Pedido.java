@@ -15,7 +15,7 @@ import java.time.LocalDate;
  * - estado: EstadoPedido (NUEVO, FACTURADO, ENVIADO)
  * - envio: referencia 1→1 a Envios
  */
-public class Pedidos {
+public class Pedido {
 
     private Long id;
     private Boolean eliminado;
@@ -23,21 +23,21 @@ public class Pedidos {
     private String numero;
     private LocalDate fecha;
     private String clienteNombre;
-    private double total;
+    private Double total;
     private EstadoPedido estado;
-    private Envios envio; // Relación 1→1
+    private Envio envio; // Relación 1→1
 
-    public Pedidos() {
+    public Pedido() {
     }
 
-    public Pedidos(Long id,
-                   Boolean eliminado,
-                   String numero,
-                   LocalDate fecha,
-                   String clienteNombre,
-                   double total,
-                   EstadoPedido estado,
-                   Envios envio) {
+    public Pedido(Long id,
+                  Boolean eliminado,
+                  String numero,
+                  LocalDate fecha,
+                  String clienteNombre,
+                  Double total,
+                  EstadoPedido estado,
+                  Envio envio) {
         this.id = id;
         this.eliminado = eliminado;
         this.numero = numero;
@@ -88,7 +88,7 @@ public class Pedidos {
         this.clienteNombre = clienteNombre;
     }
 
-    public double getTotal() {
+    public Double getTotal() {
         return total;
     }
 
@@ -104,11 +104,11 @@ public class Pedidos {
         this.estado = estado;
     }
 
-    public Envios getEnvio() {
+    public Envio getEnvio() {
         return envio;
     }
 
-    public void setEnvio(Envios envio) {
+    public void setEnvio(Envio envio) {
         this.envio = envio;
     }
 

@@ -5,8 +5,8 @@
 package gestorenvios.main;
 
 import gestorenvios.config.ApplicationConfig;
-import gestorenvios.dao.EnviosDAO;
-import gestorenvios.dao.PedidosDAO;
+import gestorenvios.dao.EnvioDAO;
+import gestorenvios.dao.PedidoDAO;
 
 /**
  *
@@ -14,17 +14,19 @@ import gestorenvios.dao.PedidosDAO;
  */
 public class GestorEnvios {
 
+    private GestorEnvios(){
+        // Constructor privado para evitar instanciación
+    }
     /**
-     * @param args the command line arguments
      */
-    static void main(String[] args) {
+    static void main() {
 
         System.out.println(ApplicationConfig.get("db.url"));
-        EnviosDAO enviosDAO = new EnviosDAO();
-        PedidosDAO pedidosDAO = new PedidosDAO(enviosDAO);
+        EnvioDAO envioDAO = new EnvioDAO();
+        PedidoDAO pedidoDAO = new PedidoDAO(envioDAO);
         try {
-            System.out.println(enviosDAO.buscarPorId(5L));
-            System.out.println(pedidosDAO.buscarPorId(7L));
+            System.out.println(envioDAO.buscarPorId(5L));
+            System.out.println(pedidoDAO.buscarPorId(7L));
         } catch (Exception e) {
             System.out.println("Error al buscar el envio: " + e.getMessage());
         }

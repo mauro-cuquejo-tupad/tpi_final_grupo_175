@@ -24,6 +24,6 @@ public interface GenericDAO<T> {
 
     T buscarPorId(Long id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
 
-    List<T> buscarTodos() throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
+    List<T> buscarTodos(Long cantidad, Long pagina) throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
 
 }

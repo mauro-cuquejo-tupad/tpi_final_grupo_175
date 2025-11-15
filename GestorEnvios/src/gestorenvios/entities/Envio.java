@@ -16,7 +16,7 @@ import java.time.LocalDate;
  * - fechaEstimada: LocalDate
  * - estado: EstadoEnvio (EN_PREPARACION, EN_TRANSITO, ENTREGADO)
  */
-public class Envios {
+public class Envio {
 
     private Long id;
     private Boolean eliminado;
@@ -29,18 +29,18 @@ public class Envios {
     private LocalDate fechaEstimada;
     private EstadoEnvio estado;
 
-    public Envios() {
+    public Envio() {
     }
 
-    public Envios(Long id,
-                  Boolean eliminado,
-                  String tracking,
-                  EmpresaEnvio empresa,
-                  TipoEnvio tipo,
-                  double costo,
-                  LocalDate fechaDespacho,
-                  LocalDate fechaEstimada,
-                  EstadoEnvio estado) {
+    public Envio(Long id,
+                 Boolean eliminado,
+                 String tracking,
+                 EmpresaEnvio empresa,
+                 TipoEnvio tipo,
+                 double costo,
+                 LocalDate fechaDespacho,
+                 LocalDate fechaEstimada,
+                 EstadoEnvio estado) {
         this.id = id;
         this.eliminado = eliminado;
         this.tracking = tracking;
