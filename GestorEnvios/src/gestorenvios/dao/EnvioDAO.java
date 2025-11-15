@@ -11,21 +11,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @author Grupo_175
- */
-
-/**
  * Data Access Object para la entidad Envíos. Gestiona todas las operaciones de
  * persistencia de envios en la base de datos.
  *
  */
 public class EnvioDAO implements GenericDAO<Envio> {
 
-    public static final String CAMPOS_ENVIO = " e.id, e.eliminado, e.tracking, e.id_empresa, e.id_tipo_envio, e.costo,"
+    private static final String CAMPOS_ENVIO = " e.id, e.eliminado, e.tracking, e.id_empresa, e.id_tipo_envio, e.costo,"
             + " e.fecha_despacho, e.fecha_estimada, e.id_estado_envio";
 
-    public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
+    private static final String QUERY_BASE = "SELECT" + CAMPOS_ENVIO + " FROM Envio e";
+
+    private static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
 
     /* Query de inserción. */
     private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -37,20 +34,20 @@ public class EnvioDAO implements GenericDAO<Envio> {
     private static final String DELETE_SQL = "UPDATE Envio SET eliminado = TRUE WHERE id = ?";
 
     /* Query SELECT ALL */
-    private static final String SELECT_ALL_SQL = "SELECT" + CAMPOS_ENVIO
-            + " FROM Envio e WHERE eliminado = FALSE"
+    private static final String SELECT_ALL_SQL = QUERY_BASE
+            + " WHERE e.eliminado = FALSE"
             + " LIMIT ? OFFSET ?";
 
     /* Query SELECT por ID */
-    private static final String SELECT_BY_ID_SQL = "SELECT" + CAMPOS_ENVIO
-            + " FROM Envio e WHERE eliminado = FALSE AND id = ?";
+    private static final String SELECT_BY_ID_SQL = QUERY_BASE
+            + " WHERE e.eliminado = FALSE AND e.id = ?";
 
-    private static final String SELECT_BY_TRACKING_SQL = "SELECT" + CAMPOS_ENVIO
-            + " FROM Envio e WHERE eliminado = FALSE AND tracking = ?";
+    private static final String SELECT_BY_TRACKING_SQL = QUERY_BASE
+            + " WHERE e.eliminado = FALSE AND e.tracking = ?";
 
-    private static final String SELECT_BY_NUMERO_SQL = "SELECT " + CAMPOS_ENVIO
-            + " FROM Envio e LEFT JOIN Pedido p  ON p.id_envio = e.id"
-            + " WHERE p.eliminado = 0"
+    private static final String SELECT_BY_NUMERO_SQL = QUERY_BASE
+            + " LEFT JOIN Pedido p  ON p.id_envio = e.id"
+            + " WHERE p.eliminado = FALSE"
             + " AND p.numero = ?";
 
 
