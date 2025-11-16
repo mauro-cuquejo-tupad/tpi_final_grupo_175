@@ -2,6 +2,8 @@ package gestorenvios.ui;
 
 import gestorenvios.controllers.EnvioController;
 import gestorenvios.controllers.PedidoController;
+import gestorenvios.entities.Envio;
+import gestorenvios.entities.Pedido;
 import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
 
@@ -10,8 +12,8 @@ public class MenuHandler {
     private final PedidoController pedidoController;
     private final EnvioController envioController;
 
-    public MenuHandler(GenericPedidosService pedidoService,
-                       GenericEnviosService envioService,
+    public MenuHandler(GenericPedidosService<Pedido> pedidoService,
+                       GenericEnviosService<Envio, Pedido> envioService,
                        InputReader input) {
         this.pedidoController = new PedidoController(pedidoService, input);
         this.envioController = new EnvioController(envioService, pedidoService, input);
