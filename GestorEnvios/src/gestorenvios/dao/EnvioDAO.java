@@ -52,7 +52,24 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
 
     @Override
-    public void insertar(Envio envio, Connection conn) throws Exception {
+    public void insertar(Envio envio) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            insertarTx(envio, conn);
+        } catch (SQLException e) {
+            throw new SQLException("Error al insertar el envío: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Inserta un envío dentro de una transacción externa. Es vital para cuando
+     * PedidosDAO guarda el pedido y necesita guardar el envío al mismo tiempo.
+     *
+     * @param envio El envío a insertar
+     * @param conn  La conexión activa con la base de datos
+     * @throws java.lang.Exception Si ocurre un error durante la inserción
+     */
+    @Override
+    public void insertarTx(Envio envio, Connection conn) throws Exception {
         try {
             PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
             setEnvioParameters(pstmt, envio);
@@ -63,77 +80,16 @@ public class EnvioDAO implements GenericDAO<Envio> {
             setGeneratedId(pstmt, envio);     // recuperar ID
 
         } catch (SQLException e) {
-            throw new Exception("Error al insertar el envío: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void insertar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            insertar(envio, conn);
-        } catch (SQLException e) {
             throw new SQLException("Error al insertar el envío: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Inserta un envío dentro de una transacción externa. Es vital para cuando
-     * PedidosDAO guarda el pedido y necesita guardar el envío al mismo tiempo.
-     *
-     * @param envio
-     * @param conn
-     * @throws java.lang.Exception
-     */
-    @Override
-    public void insertTx(Envio envio, Connection conn) throws Exception {
-        // No cerramos conexión 
-        try (PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
-
-            setEnvioParameters(pstmt, envio);
-            pstmt.setBoolean(1, false); // El primero es "eliminado"
-
-            pstmt.executeUpdate();
-
-            setGeneratedId(pstmt, envio);
-        }
-        // Si falla, la excepción sube y el Transaction Manager hace rollback
-    }
-
     @Override
     public void actualizar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
-
-            // no está el campo "eliminado" al principio
-            pstmt.setString(1, envio.getTracking());
-            pstmt.setInt(2, envio.getEmpresa().getId());
-            pstmt.setInt(3, envio.getTipo().getId());
-            pstmt.setDouble(4, envio.getCosto());
-
-            if (envio.getFechaDespacho() != null) {
-                pstmt.setDate(5, java.sql.Date.valueOf(envio.getFechaDespacho()));
-            } else {
-                pstmt.setNull(5, java.sql.Types.DATE);
-            }
-
-            if (envio.getFechaEstimada() != null) {
-                pstmt.setDate(6, java.sql.Date.valueOf(envio.getFechaEstimada()));
-            } else {
-                pstmt.setNull(6, java.sql.Types.DATE);
-            }
-
-            pstmt.setInt(7, envio.getEstado().getId());
-
-            pstmt.setLong(8, envio.getId());
-
-            int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected == 0) {
-                throw new SQLException("No se pudo actualizar el envío ID: " + envio.getId() + ". Tal vez no existe o está eliminado.");
-            }
-
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            actualizarTx(envio, conn);
         } catch (SQLException e) {
-            throw new Exception("Error al actualizar el envío: " + e.getMessage(), e);
+            throw new SQLException("Error al actualizar el envío: " + e.getMessage(), e);
         }
     }
 
@@ -173,35 +129,26 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
     @Override
     public void eliminarLogico(Long id) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
-
-            pstmt.setLong(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected == 0) {
-                throw new SQLException("No se encontró envío con ID: " + id);
-            }
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            eliminarLogicoTx(id, conn);
         } catch (SQLException e) {
-            throw new Exception("Error al eliminar lógicamente el envío: " + e.getMessage(), e);
+            throw new SQLException("Error al eliminar lógicamente el envío: " + e.getMessage(), e);
         }
     }
 
     @Override
     public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
-        // NO abrimos conexión, usamos la "conn"
         try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
             pstmt.setLong(1, id);
             if (pstmt.executeUpdate() == 0) {
                 throw new SQLException("No se encontró envío con ID: " + id);
             }
         }
-        // NO cerramos la conexión
     }
 
     @Override
     public Envio buscarPorId(Long id) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
-
             pstmt.setLong(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -210,12 +157,12 @@ public class EnvioDAO implements GenericDAO<Envio> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar envío por ID: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar envío por ID: " + e.getMessage(), e);
         }
         return null;
     }
 
-    public Envio buscarPorTracking(String tracking) throws Exception {
+    public Envio buscarPorTracking(String tracking) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_TRACKING_SQL)) {
 
@@ -227,12 +174,12 @@ public class EnvioDAO implements GenericDAO<Envio> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar envío por Tracking: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar envío por Tracking: " + e.getMessage(), e);
         }
         return null;
     }
 
-    public Envio buscarPorNumeroPedido(String numero) throws Exception {
+    public Envio buscarPorNumeroPedido(String numero) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_NUMERO_SQL)) {
 
@@ -244,22 +191,20 @@ public class EnvioDAO implements GenericDAO<Envio> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar envío por número de pedido: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar envío por número de pedido: " + e.getMessage(), e);
         }
         return null;
     }
 
     @Override
     public List<Envio> buscarTodos(Long cantidad, Long pagina) throws Exception {
-        // Inicializamos la lista vacía
         List<Envio> envios = new ArrayList<>();
 
-        // Valores por defecto
-        Long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
-        Long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
+        long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
+        long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
 
         // Calcular el OFFSET (registros a saltar)
-        Long offset = (numeroPagina - 1L) * registrosPorPagina;
+        long offset = (numeroPagina - 1L) * registrosPorPagina;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL)) {
@@ -275,7 +220,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al listar envíos: " + e.getMessage(), e);
+            throw new SQLException("Error al listar envíos: " + e.getMessage(), e);
         }
         return envios;
     }
@@ -317,7 +262,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    private Envio mapEnvio(ResultSet resultSet) throws Exception {
+    private Envio mapEnvio(ResultSet resultSet) throws SQLException {
         Envio envio = new Envio();
 
         envio.setId(resultSet.getLong("id"));
@@ -341,7 +286,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
     }
 
     public Long obtenerCantidadTotalDeEnvios() throws SQLException {
-        Long total = 0L;
+        long total = 0L;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL);
@@ -350,9 +295,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
             if (rs.next()) {
                 total = rs.getLong("total");
             }
-
         }
-
         return total;
     }
 }

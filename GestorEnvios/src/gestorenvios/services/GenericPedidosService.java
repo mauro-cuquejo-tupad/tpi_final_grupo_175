@@ -10,7 +10,7 @@ import java.util.List;
 public interface GenericPedidosService<T> extends GenericService<T> {
     void eliminarEnvioDePedido(Long idPedido) throws EliminacionEntityException;
 
-    void actualizar(T pedido, Connection conn) throws ActualizacionEntityException;
+    void actualizarTx(T pedido, Connection conn) throws ActualizacionEntityException;
 
     T buscarPorNumeroPedido(String numero) throws ConsultaEntityException;
 

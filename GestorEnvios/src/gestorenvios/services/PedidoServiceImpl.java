@@ -100,9 +100,9 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void actualizar(Pedido pedido, Connection conn) throws ActualizacionEntityException {
+    public void actualizarTx(Pedido pedido, Connection conn) throws ActualizacionEntityException {
         try {
-            pedidoDAO.actualizar(pedido, conn);
+            pedidoDAO.actualizarTx(pedido, conn);
         } catch (Exception e) {
             throw new ActualizacionEntityException("Error al actualizar el pedido (transaccional): " + e.getMessage());
         }
@@ -156,27 +156,14 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public void eliminarEnvioDePedido(Long idPedido) throws EliminacionEntityException {
-        TransactionManager transactionManager = null;
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-            transactionManager = new TransactionManager(conn);
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
 
             transactionManager.startTransaction();
             pedidoDAO.desvincularEnvioTx(idPedido, conn);
             transactionManager.commit();
         } catch (Exception e) {
-            System.out.println("Error en la transacción: " + e.getMessage());
-            if (transactionManager != null) {
-                transactionManager.rollback();
-            }
             throw new EliminacionEntityException("Error al eliminar el envío del pedido: " + e.getMessage());
-        } finally {
-            // Cerrar el TransactionManager y la conexión
-            // Esto se hace en el método close() del TransactionManager
-            if (transactionManager != null) {
-                transactionManager.close();
-            }
         }
-
     }
 }

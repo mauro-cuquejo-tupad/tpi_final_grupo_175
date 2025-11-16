@@ -28,9 +28,10 @@ public class EnvioConsoleController {
     public void crear() {
         System.out.println("\n--- CREAR ENVÍO POR NUMERO PEDIDO ---");
         try {
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(
-                    input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO al que asignar el envío: "));
-
+            Pedido pedido = getPedido();
+            if (pedido == null) {
+                return;
+            }
             Envio envio = crearEnvioEnMemoria();
 
             //transaccional para crear envio y actualizar pedido
@@ -40,6 +41,27 @@ public class EnvioConsoleController {
         } catch (Exception e) {
             System.out.println("❌ Error al crear envío: " + e.getMessage());
         }
+    }
+
+    private Pedido getPedido() {
+        Pedido pedido;
+        while (true) {
+            String numeroPedido = input.leerNumeroPedido(
+                    "Ingrese el NÚMERO de PEDIDO al que asignar el envío o 'q' para salir: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return null;
+            }
+            pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
+            if (pedido == null) {
+                System.out.println("❌ El pedido con número " + numeroPedido + " no existe. Intente nuevamente.");
+            } else if (pedido.getEnvio() != null) {
+                System.out.println("❌ El pedido con número " + numeroPedido + " ya tiene un envío asignado. Intente nuevamente.");
+            } else {
+                break;
+            }
+        }
+        return pedido;
     }
 
     public void listar() {
@@ -107,7 +129,7 @@ public class EnvioConsoleController {
         try {
             envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            System.out.println("❌ Error al buscar envío por Tracking: " + e.getMessage());
             return;
         }
         actualizar(envio);
@@ -119,7 +141,7 @@ public class EnvioConsoleController {
         try {
             envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a modificar: "));
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            System.out.println("❌ Error al buscar envío por ID: " + e.getMessage());
             return;
         }
         actualizar(envio);

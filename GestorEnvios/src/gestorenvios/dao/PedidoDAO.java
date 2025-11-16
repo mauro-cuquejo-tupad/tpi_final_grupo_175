@@ -105,24 +105,11 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     public void insertar(Pedido pedido) throws Exception {
         // Usamos try-with-resources para la conexión y el statement
         try (Connection conn = DatabaseConnection.getConnection()) {
-            insertar(pedido, conn);
+            insertarTx(pedido, conn);
         } catch (SQLException e) {
             // Captura el error de SQL y lo relanza como una excepción específica
             throw new SQLException("Error al insertar el pedido: " + e.getMessage());
         }
-    }
-
-    @Override
-    public void insertar(Pedido pedido, Connection conn) throws Exception {
-        PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
-        // Llamada al método para setear los VALUES "?"
-        setPedidoParameters(pstmt, pedido);
-
-        // Ejecuta la inserción
-        pstmt.executeUpdate();
-
-        // Método para recuperar los ID autogenerados
-        setGeneratedId(pstmt, pedido);
     }
 
     /**
@@ -138,62 +125,11 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * @throws Exception Si falla la inserción
      */
     @Override
-    public void insertTx(Pedido pedido, Connection conn) throws Exception {
-
-        // Este método asume que la conexión (conn) es manejada 
-        // (abierta, cerrada, commit, rollback) por un servicio externo.
-        // El try-with-resources SÓLO se aplica al PreparedStatement.
-        // ¡No cierra la "conn"!
-        try (PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
-
-            // Reutilizamos el primer método
-            setPedidoParameters(pstmt, pedido);
-
-            // ejecución
-            pstmt.executeUpdate();
-
-            // Reutilizamos el segundo método
-            setGeneratedId(pstmt, pedido);
-        }
-
-        // Si ocurre una SQLException, se lanza "throws Exception"
-        // y el servicio que maneja la transacción deberá hacer un "rollback".
-    }
-
-    public void actualizar(Pedido pedido, Connection conn) throws SQLException {
-        try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
-            // Seteamos los parámetros del UPDATE
-            pstmt.setString(1, pedido.getNumero());
-            pstmt.setDate(2, java.sql.Date.valueOf(pedido.getFecha()));
-            pstmt.setString(3, pedido.getClienteNombre());
-            pstmt.setDouble(4, pedido.getTotal());
-
-            // --- Manejo de FK para el Estado (Enum) ---
-            if (pedido.getEstado() != null) {
-                pstmt.setInt(5, pedido.getEstado().getId());
-            } else {
-                pstmt.setNull(5, java.sql.Types.INTEGER);
-            }
-
-            // --- Manejo de FK para el Envío ---
-            // Chequeamos si el envío no es nulo Y si su ID no es nulo
-            if (pedido.getEnvio() != null && pedido.getEnvio().getId() != null && pedido.getEnvio().getId() > 0) {
-                pstmt.setLong(6, pedido.getEnvio().getId());
-            } else {
-                pstmt.setNull(6, java.sql.Types.BIGINT);
-            }
-
-            // --- ID para el WHERE clause ---
-            pstmt.setLong(7, pedido.getId());
-
-            // Ejecutamos la actualización
-            int rowsAffected = pstmt.executeUpdate();
-
-            // Verificamos si la actualización fue exitosa
-            if (rowsAffected == 0) {
-                throw new SQLException("No se pudo actualizar el pedido con ID: " + pedido.getId() + ". Es posible que no exista.");
-            }
-        }
+    public void insertarTx(Pedido pedido, Connection conn) throws Exception {
+        PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
+        setPedidoParameters(pstmt, pedido);
+        pstmt.executeUpdate();
+        setGeneratedId(pstmt, pedido);
     }
 
     /**
@@ -213,19 +149,18 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     @Override
     public void actualizar(Pedido pedido) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            actualizar(pedido, conn);
+            actualizarTx(pedido, conn);
         } catch (SQLException e) {
-            throw new Exception("Error al actualizar el pedido: " + e.getMessage(), e);
+            throw new SQLException("Error al actualizar el pedido: " + e.getMessage(), e);
         }
     }
 
     @Override
     public void actualizarTx(Pedido pedido, Connection conn) throws Exception {
-        // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
             // Seteamos los parámetros del UPDATE
             pstmt.setString(1, pedido.getNumero());
-            pstmt.setDate(2, java.sql.Date.valueOf(pedido.getFecha()));
+            pstmt.setDate(2, Date.valueOf(pedido.getFecha()));
             pstmt.setString(3, pedido.getClienteNombre());
             pstmt.setDouble(4, pedido.getTotal());
 
@@ -241,12 +176,12 @@ public class PedidoDAO implements GenericDAO<Pedido> {
                 pstmt.setNull(6, java.sql.Types.BIGINT);
             }
 
-            pstmt.setLong(7, pedido.getId()); // ID para el WHERE
+            pstmt.setLong(7, pedido.getId());
 
             int rowsAffected = pstmt.executeUpdate();
 
             if (rowsAffected == 0) {
-                throw new SQLException("No se pudo actualizar (Tx) el pedido ID: " + pedido.getId() + ".");
+                throw new SQLException("No se pudo actualizar el pedido ID: " + pedido.getId() + ".");
             }
         }
     }
@@ -265,21 +200,22 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      */
     @Override
     public void eliminarLogico(Long id) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            eliminarLogicoTx(id, conn);
+        } catch (SQLException e) {
+            throw new SQLException("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
+        }
+    }
 
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
-
+    @Override
+    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+        try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
             pstmt.setLong(1, id);
-
-            // Ejecutamos el UPDATE
             int rowsAffected = pstmt.executeUpdate();
 
-            // Si no se actualizó ninguna fila, es que no se encontró el ID
             if (rowsAffected == 0) {
-                throw new SQLException("No se encontró pedido con ID: " + id + " (o ya estaba eliminado).");
+                throw new SQLException("No se encontró pedido (Tx) con ID: " + id + ".");
             }
-        } catch (SQLException e) {
-            // Captura y relanza cualquier error de SQL
-            throw new Exception("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
         }
     }
 
@@ -293,9 +229,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * IMPORTANTE: NO elimina el envío asociado.
      *
      * @param numero numero del pedido a eliminar
-     * @throws Exception Si el pedido no existe o hay error de BD
+     * @throws SQLException Si el pedido no existe o hay error de BD
      */
-    public void eliminarLogicoPorNumero(String numero) throws Exception {
+    public void eliminarLogicoPorNumero(String numero) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL_POR_NUMERO)) {
 
@@ -310,20 +246,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             }
         } catch (SQLException e) {
             // Captura y relanza cualquier error de SQL
-            throw new Exception("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
-        // NO abre ni cierra la conexión, usa la "conn" recibida
-        try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
-            pstmt.setLong(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected == 0) {
-                throw new SQLException("No se encontró pedido (Tx) con ID: " + id + ".");
-            }
+            throw new SQLException("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
         }
     }
 
@@ -333,9 +256,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      *
      * @param pedidoId El ID del pedido a modificar.
      * @param conn     La conexión transaccional.
-     * @throws Exception Si falla el UPDATE.
+     * @throws SQLException Si falla el UPDATE.
      */
-    public void desvincularEnvioTx(long pedidoId, Connection conn) throws Exception {
+    public void desvincularEnvioTx(long pedidoId, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(DESVINCULAR_ENVIO_SQL)) {
             pstmt.setLong(1, pedidoId);
 
@@ -376,7 +299,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             }
         } catch (SQLException e) {
             // Relanzamos el error con un mensaje claro
-            throw new Exception("Error al obtener pedido por ID: " + e.getMessage(), e);
+            throw new SQLException("Error al obtener pedido por ID: " + e.getMessage(), e);
         }
         return null;
     }
@@ -411,7 +334,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al listar pedidos: " + e.getMessage(), e);
+            throw new SQLException("Error al listar pedidos: " + e.getMessage(), e);
         }
 
         return pedidos;
@@ -428,9 +351,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * @param nombre Texto a buscar en el nombre del cliente (no puede estar
      *               vacío)
      * @return Lista de pedidos que coinciden con el filtro (puede estar vacía)
-     * @throws Exception Si hay error de BD
+     * @throws SQLException Si hay error de BD
      */
-    public List<Pedido> buscarPorClienteNombre(String nombre, Long cantidad, Long pagina) throws Exception {
+    public List<Pedido> buscarPorClienteNombre(String nombre, Long cantidad, Long pagina) throws SQLException {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El Nombre del Cliente no puede estar vacío");
         }
@@ -470,9 +393,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      *
      * @param numero Número exacto a buscar (ej: "PED-00123")
      * @return Pedido con ese número, o null si no existe o está eliminado
-     * @throws Exception Si hay error de BD
+     * @throws SQLException Si hay error de BD
      */
-    public Pedido buscarPorNumero(String numero) throws Exception {
+    public Pedido buscarPorNumero(String numero) throws SQLException {
         if (numero == null || numero.trim().isEmpty()) {
             throw new IllegalArgumentException("El número de pedido no puede estar vacío");
         }
@@ -491,7 +414,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar pedido por número: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar pedido por número: " + e.getMessage(), e);
         }
 
         // No se encontró
@@ -504,9 +427,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      *
      * @param tracking Código de seguimiento (ej: "TRK-999")
      * @return El Pedido asociado a ese tracking, o null si no existe.
-     * @throws Exception Si hay error de BD
+     * @throws SQLException Si hay error de BD
      */
-    public Pedido buscarPorTracking(String tracking) throws Exception {
+    public Pedido buscarPorTracking(String tracking) throws SQLException {
         if (tracking == null || tracking.trim().isEmpty()) {
             throw new IllegalArgumentException("El código de tracking no puede estar vacío");
         }
@@ -524,7 +447,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar pedido por tracking: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar pedido por tracking: " + e.getMessage(), e);
         }
 
         return null;
@@ -585,7 +508,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * @return Un objeto Pedidos completamente populado
      * @throws SQLException Si hay error al leer del ResultSet
      */
-    private Pedido mapPedido(ResultSet rs) throws Exception {
+    private Pedido mapPedido(ResultSet rs) throws SQLException {
 
         // --- Mapeamos la entidad principal: Pedidos ---
         Pedido pedido = new Pedido();

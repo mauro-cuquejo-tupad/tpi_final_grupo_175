@@ -10,19 +10,17 @@ import java.util.List;
  */
 public interface GenericDAO<T> {
 
-    void insertar(T entidad, Connection conn) throws Exception;
+    void insertar(T entidad) throws Exception;
 
-    public void insertar(T entidad) throws Exception;
+    void insertarTx(T entidad, Connection conn) throws Exception;
 
-    public void insertTx(T entidad, Connection conn) throws Exception;
+    void actualizar(T entidad) throws Exception;
 
-    public void actualizar(T entidad) throws Exception;
+    void actualizarTx(T entidad, Connection conn) throws Exception;
 
-    public void actualizarTx(T entidad, Connection conn) throws Exception;
+    void eliminarLogico(Long id) throws Exception; // BORRADO LÓGICO. UPDATE
 
-    public void eliminarLogico(Long id) throws Exception; // BORRADO LÓGICO. UPDATE
-
-    public void eliminarLogicoTx(Long id, Connection conn) throws Exception;
+    void eliminarLogicoTx(Long id, Connection conn) throws Exception;
 
     T buscarPorId(Long id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
 
