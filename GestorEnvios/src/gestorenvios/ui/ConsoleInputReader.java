@@ -52,7 +52,11 @@ public class ConsoleInputReader implements InputReader {
         while (true) {
             try {
                 System.out.print(mensaje);
-                return LocalDate.parse(scanner.nextLine().trim());
+                String fechaStr = scanner.nextLine().trim();
+                if (fechaStr.isEmpty()) {
+                    return null;
+                }
+                return LocalDate.parse(fechaStr);
             } catch (DateTimeParseException e) {
                 System.out.println("Error: Formato inválido. Use AAAA-MM-DD.");
             }

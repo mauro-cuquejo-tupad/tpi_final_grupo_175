@@ -9,7 +9,7 @@ public interface GenericService<T> {
 
     T buscarPorId(Long id) throws Exception;
 
-    void actualizar(T pedido) throws Exception;
+    void actualizar(T entity) throws Exception;
 
     void eliminar(Long id) throws Exception;
 }

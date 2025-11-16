@@ -27,8 +27,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
 
     /**
-     *  Query de actualización de pedido por ID.
-       NO actualiza el flag eliminado (solo se modifica en soft delete).
+     * Query de actualización de pedido por ID.
+     * NO actualiza el flag eliminado (solo se modifica en soft delete).
      */
     private static final String UPDATE_SQL = "UPDATE Pedido SET numero = ?, fecha = ?, cliente_nombre = ?, total = ?, id_estado_pedido = ?, id_envio = ? WHERE id = ?";
 
@@ -90,7 +90,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             + " WHERE p.eliminado = 0 AND e.tracking = ?";
 
     private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) numero AS max_numero FROM Pedido";
-
 
 
     /**

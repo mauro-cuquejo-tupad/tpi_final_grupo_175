@@ -17,15 +17,13 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public void crear(Pedido pedido) throws Exception {
-            validarPedido(pedido);
-            pedido.setNumero(generarNuevoNumeroPedido());
+        validarPedido(pedido);
+        pedido.setNumero(generarNuevoNumeroPedido());
 
-            System.out.println("⌛ Creando pedido: " + pedido);
-            pedidoDAO.insertar(pedido);
+        pedidoDAO.insertar(pedido);
     }
 
     private String generarNuevoNumeroPedido() throws SQLException {
-
         String ultimoPedido = pedidoDAO.buscarUltimoNumeroPedido();
 
         if (ultimoPedido == null || ultimoPedido.isEmpty()) {
@@ -38,7 +36,7 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     private void validarPedido(Pedido pedido) {
-        if(StringUtils.isNullOrEmpty(pedido.getClienteNombre())) {
+        if (StringUtils.isNullOrEmpty(pedido.getClienteNombre())) {
             throw new IllegalArgumentException("El nombre del cliente no puede estar vacío.");
         }
         if (pedido.getTotal() == null || pedido.getTotal() < 0) {
@@ -58,19 +56,16 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public void actualizar(Pedido pedido, Connection conn) throws Exception {
-        System.out.println("⌛ Actualizando pedido: " + pedido);
         pedidoDAO.actualizar(pedido, conn);
     }
 
     @Override
     public void actualizar(Pedido pedido) throws Exception {
-        System.out.println("⌛ Actualizando pedido: " + pedido);
         pedidoDAO.actualizar(pedido);
     }
 
     @Override
     public void eliminar(Long id) throws Exception {
-        System.out.println("Eliminando pedido con id: " + id);
         pedidoDAO.eliminarLogico(id);
     }
 
@@ -96,7 +91,11 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void eliminarEnvioDePedido(Long idPedido) {
-        System.out.println("Eliminando envio del pedido con id: " + idPedido);
+    public void eliminarEnvioDePedido(Long idPedido) throws Exception {
+        ManejadorTransaccionesImpl transactionManager = new ManejadorTransaccionesImpl();
+        transactionManager.execute(conn -> {
+            pedidoDAO.desvincularEnvioTx(idPedido, conn);
+            return null;
+        });
     }
 }

@@ -2,9 +2,10 @@ package gestorenvios.ui;
 
 public class MenuDisplay {
 
-    private MenuDisplay(){
+    private MenuDisplay() {
         // Constructor privado para evitar instanciación
     }
+
     /**
      * Muestra el menú principal con todas las opciones CRUD.
      * <p>
@@ -48,19 +49,20 @@ public class MenuDisplay {
         System.out.println("  7  - Actualizar pedido por ID");
         System.out.println("  8  - Eliminar pedido por número");
         System.out.println("  9  - Eliminar pedido por ID");
+        System.out.println("  10 - Eliminar Envio de pedido");
         System.out.println();
         System.out.println("ENVIOS");
-        System.out.println(" 10  - Crear envío");
-        System.out.println(" 11  - Listar envíos");
-        System.out.println(" 12  - Buscar envío por tracking");
-        System.out.println(" 13  - Buscar envío por número de pedido");
-        System.out.println(" 14  - Buscar envío por ID");
-        System.out.println(" 15  - Actualizar envío por tracking");
-        System.out.println(" 16  - Actualizar envío por número de pedido");
-        System.out.println(" 17  - Actualizar envío por ID");
-        System.out.println(" 18  - Eliminar envío por tracking");
-        System.out.println(" 19  - Eliminar envío por número de pedido");
-        System.out.println(" 20  - Eliminar envío por ID");
+        System.out.println(" 11  - Crear envío");
+        System.out.println(" 12  - Listar envíos");
+        System.out.println(" 13  - Buscar envío por tracking");
+        System.out.println(" 14  - Buscar envío por número de pedido");
+        System.out.println(" 15  - Buscar envío por ID");
+        System.out.println(" 16  - Actualizar envío por tracking");
+        System.out.println(" 17  - Actualizar envío por número de pedido");
+        System.out.println(" 18  - Actualizar envío por ID");
+        System.out.println(" 19  - Eliminar envío por tracking");
+        System.out.println(" 20  - Eliminar envío por número de pedido");
+        System.out.println(" 21  - Eliminar envío por ID");
         System.out.println();
         System.out.println("  0  - Salir");
         System.out.println();

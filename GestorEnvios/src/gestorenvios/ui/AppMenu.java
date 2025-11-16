@@ -52,24 +52,22 @@ public class AppMenu {
         this.input = new ConsoleInputReader(new Scanner(System.in));
 
         GenericPedidosService<Pedido> pedidoService = createPedidoService();
-        GenericEnviosService<Envio> enviosService = crearEnvioService(pedidoService);
+        GenericEnviosService<Envio, Pedido> enviosService = crearEnvioService(pedidoService);
 
         this.menuHandler = new MenuHandler(pedidoService, enviosService, input);
         this.running = true;
     }
 
-    private GenericEnviosService<Envio> crearEnvioService(GenericPedidosService<Pedido> pedidoService) {
-        EnvioDAO envioDAO = new EnvioDAO();
-        return new EnvioServiceImpl(envioDAO, pedidoService);
+    private GenericEnviosService<Envio, Pedido> crearEnvioService(GenericPedidosService<Pedido> pedidoService) {
+        return new EnvioServiceImpl(new EnvioDAO(), pedidoService);
     }
 
     /**
      * Punto de entrada de la aplicación Java. Crea instancia de AppMenu y
      * ejecuta el menú principal.
      *
-     * @param args Argumentos de línea de comandos (no usados)
      */
-    static void main(String[] args) {
+    static void main() {
         AppMenu app = new AppMenu();
         app.run();
     }
@@ -143,19 +141,20 @@ public class AppMenu {
             case 7 -> menuHandler.actualizarPedidoPorId();
             case 8 -> menuHandler.eliminarPedidoPorNumero();
             case 9 -> menuHandler.eliminarPedidoPorId();
+            case 10 -> menuHandler.eliminarEnvioDePedido();
 
             //envios
-            case 10 -> menuHandler.crearEnvio();
-            case 11 -> menuHandler.listarEnvios();
-            case 12 -> menuHandler.buscarEnvioPorTracking();
-            case 13 -> menuHandler.buscarEnvioPorNumeroPedido();
-            case 14 -> menuHandler.buscarEnvioPorId();
-            case 15 -> menuHandler.actualizarEnvioPorTracking();
-            case 16 -> menuHandler.actualizarEnvioPorNumeroPedido();
-            case 17 -> menuHandler.actualizarEnvioPorId();
-            case 18 -> menuHandler.eliminarEnvioPorTracking();
-            case 19 -> menuHandler.eliminarEnvioPorNumeroPedido();
-            case 20 -> menuHandler.eliminarEnvioPorId();
+            case 11 -> menuHandler.crearEnvio();
+            case 12 -> menuHandler.listarEnvios();
+            case 13 -> menuHandler.buscarEnvioPorTracking();
+            case 14 -> menuHandler.buscarEnvioPorNumeroPedido();
+            case 15 -> menuHandler.buscarEnvioPorId();
+            case 16 -> menuHandler.actualizarEnvioPorTracking();
+            case 17 -> menuHandler.actualizarEnvioPorNumeroPedido();
+            case 18 -> menuHandler.actualizarEnvioPorId();
+            case 19 -> menuHandler.eliminarEnvioPorTracking();
+            case 20 -> menuHandler.eliminarEnvioPorNumeroPedido();
+            case 21 -> menuHandler.eliminarEnvioPorId();
 
             //salir
             case 0 -> {

@@ -15,11 +15,11 @@ import java.util.List;
 
 public class EnvioController {
 
-    private final GenericEnviosService<Envio> envioService;
+    private final GenericEnviosService<Envio, Pedido> envioService;
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
-    public EnvioController(GenericEnviosService<Envio> envioService,
+    public EnvioController(GenericEnviosService<Envio, Pedido> envioService,
                            GenericPedidosService<Pedido> pedidoService,
                            InputReader input) {
         this.envioService = envioService;
@@ -80,29 +80,26 @@ public class EnvioController {
         }
     }
 
-    public Envio buscarPorNumeroPedido() {
-        System.out.println("\n--- BUSCAR ENVIO POR TRACKING ---");
+    public void buscarPorNumeroPedido() {
+        System.out.println("\n--- BUSCAR ENVIO POR NUMERO PEDIDO ---");
         try {
-            String numero = input.readPedidoNumero("Ingrese Numero de pedido (PED-XXXXXXXX): ");
-            Pedido p = pedidoService.buscarPorNumeroPedido(numero);
+            Pedido p = pedidoService.buscarPorNumeroPedido(
+                    input.readPedidoNumero("Ingrese Numero de pedido (PED-XXXXXXXX): "));
+
             Envio envio = p.getEnvio();
             EnvioPrinter.mostrarResumen(envio);
-            return envio;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar: " + e.getMessage());
-            return null;
         }
     }
 
-    public Envio buscarPorId() {
-        System.out.println("\n--- BUSCAR ENVIO POR TRACKING ---");
+    public void buscarPorId() {
+        System.out.println("\n--- BUSCAR ENVIO POR ID ---");
         try {
             Envio envio = envioService.buscarPorId(input.readLong("Ingrese ID de pedido: "));
             EnvioPrinter.mostrarResumen(envio);
-            return envio;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar: " + e.getMessage());
-            return null;
         }
     }
 
@@ -131,8 +128,8 @@ public class EnvioController {
     public void actualizarEnvioPorNumeroPedido() {
         System.out.println("\n--- ACTUALIZAR ENVÍO DE UN PEDIDO ---");
         try {
-            String numeroPedido = input.readPedidoNumero("Ingrese el NÚMERO de PEDIDO: ");
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(
+                    input.readPedidoNumero("Ingrese el NÚMERO de PEDIDO: "));
 
             if (pedido == null) {
                 System.out.println("❌ Pedido no encontrado.");
@@ -176,7 +173,13 @@ public class EnvioController {
         String costoStr = input.nextLine().trim();
         if (!costoStr.isEmpty()) {
             try {
-                envio.setCosto(Double.parseDouble(costoStr));
+                double costo = Double.parseDouble(costoStr);
+                if (envio.getCosto() < 0) {
+                    System.out.println("⚠ El costo no puede ser negativo. Se mantiene el costo anterior.");
+                } else {
+                    envio.setCosto(costo);
+                }
+
             } catch (NumberFormatException _) {
                 System.out.println("⚠ Formato incorrecto. Se mantiene el costo anterior.");
             }
@@ -193,12 +196,11 @@ public class EnvioController {
             }
         }
 
-        System.out.print("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ");
-        String fEstimada = input.nextLine().trim();
-        if (!fEstimada.isEmpty()) {
+        LocalDate fEstimada = input.readDate("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ");
+        if (fEstimada != null) {
             try {
-                envio.setFechaEstimada(LocalDate.parse(fEstimada));
-            } catch (DateTimeParseException e) {
+                envio.setFechaEstimada(fEstimada);
+            } catch (DateTimeParseException _) {
                 System.out.println("⚠ Fecha inválida. Se mantiene la anterior.");
             }
         }
@@ -229,7 +231,9 @@ public class EnvioController {
         System.out.println("\n--- ELIMINAR ENVÍO POR NUMERO PEDIDO ---");
         System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
         try {
-            Envio envio = envioService.buscarPorNumeroPedido(input.readPedidoNumero("Ingrese el NÚMERO de PEDIDO: "));
+            Envio envio = envioService.buscarPorNumeroPedido(
+                    input.readPedidoNumero("Ingrese el NÚMERO de PEDIDO: "));
+
             eliminar(envio);
         } catch (Exception e) {
             System.out.println("❌ Error al actualizar envío: " + e.getMessage());

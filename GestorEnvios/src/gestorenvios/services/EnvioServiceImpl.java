@@ -8,7 +8,7 @@ import gestorenvios.entities.Pedido;
 import java.sql.SQLException;
 import java.util.List;
 
-public class EnvioServiceImpl implements GenericEnviosService<Envio> {
+public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     EnvioDAO envioDAO;
     GenericPedidosService<Pedido> pedidosService;
 
@@ -60,11 +60,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio> {
     }
 
     @Override
-    public Long crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws Exception {
+    public void crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws Exception {
         ManejadorTransaccionesImpl transactionManager = new ManejadorTransaccionesImpl();
         transactionManager.execute(conn -> {
             //primero creo el envio
-            envioDAO.insertar(envio, conn);
+            envioDAO.insertTx(envio, conn);
             //actualizo el pedido con el envio creado
             pedido.setEnvio(envio);
             //actualizo el estado del pedido
@@ -72,6 +72,5 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio> {
             pedidosService.actualizar(pedido, conn);
             return null;
         });
-        return 0L;
     }
 }

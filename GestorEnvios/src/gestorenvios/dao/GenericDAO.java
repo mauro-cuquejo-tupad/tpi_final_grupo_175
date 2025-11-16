@@ -1,7 +1,5 @@
 package gestorenvios.dao;
 
-import gestorenvios.entities.Envio;
-
 import java.sql.Connection;
 import java.util.List;
 

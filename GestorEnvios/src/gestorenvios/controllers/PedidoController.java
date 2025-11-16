@@ -104,7 +104,6 @@ public class PedidoController {
     }
 
 
-
     //ACTUALIZAR PEDIDOS
     public void actualizarPedidoPorNumero() {
         System.out.println("\n--- ACTUALIZAR PEDIDO ---");
@@ -239,6 +238,26 @@ public class PedidoController {
 
         } catch (Exception e) {
             System.out.println("❌ Error al eliminar: " + e.getMessage());
+        }
+    }
+
+    public void eliminarEnvioDePedido() {
+        System.out.println("\n--- ELIMINAR ENVIO DE PEDIDO ---");
+        try {
+            String numero = input.readPedidoNumero("Ingrese Numero del pedido para eliminar su envío (PED-XXXXXXXX): ");
+
+            // Llamada al Service (Soft Delete)
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
+            if (pedido == null) {
+                System.out.println("❌ Pedido no encontrado.");
+                return;
+            }
+            pedidoService.eliminarEnvioDePedido(pedido.getId());
+
+            System.out.println("✅ Envío eliminado del pedido correctamente.");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error al eliminar el envío del pedido: " + e.getMessage());
         }
     }
 

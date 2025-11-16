@@ -4,9 +4,6 @@
  */
 package gestorenvios.main;
 
-import gestorenvios.config.ApplicationConfig;
-import gestorenvios.dao.EnvioDAO;
-import gestorenvios.dao.PedidoDAO;
 import gestorenvios.ui.AppMenu;
 
 /**
@@ -15,10 +12,12 @@ import gestorenvios.ui.AppMenu;
  */
 public class GestorEnvios {
 
-    private GestorEnvios(){
+    private GestorEnvios() {
         // Constructor privado para evitar instanciación
     }
+
     /**
+     *
      */
     static void main() {
         AppMenu app = new AppMenu();
