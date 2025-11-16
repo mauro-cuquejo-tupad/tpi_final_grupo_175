@@ -10,7 +10,7 @@ public class MenuDisplay {
      * Muestra el menú principal con todas las opciones CRUD.
      * <p>
      * Opciones para Pedidos (1-5):
-     * 1. Crear pedido: Permite crear pedido con envio opcional
+     * 1. Crear pedido: Permite crear pedido
      * 2. Listar pedidos: Lista todos o busca por nombre de cliente o numero
      * 3. Actualizar pedido: Actualiza datos de pedido y opcionalmente su envio
      * 4. Eliminar pedido: Soft delete de pedido (NO elimina envio asociado)
@@ -40,7 +40,7 @@ public class MenuDisplay {
         System.out.println("=== MENU ===");
         System.out.println();
         System.out.println("PEDIDOS");
-        System.out.println("  1  - Crear pedido (con envío opcional)");
+        System.out.println("  1  - Crear pedido");
         System.out.println("  2  - Listar pedidos");
         System.out.println("  3  - Buscar pedido por número");
         System.out.println("  4  - Buscar pedido por tracking");
