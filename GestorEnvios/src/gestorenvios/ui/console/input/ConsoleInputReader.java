@@ -1,5 +1,5 @@
 // java
-package gestorenvios.ui;
+package gestorenvios.ui.console.input;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;

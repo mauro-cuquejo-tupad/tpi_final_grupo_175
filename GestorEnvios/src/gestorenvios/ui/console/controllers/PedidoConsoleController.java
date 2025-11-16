@@ -1,23 +1,23 @@
-package gestorenvios.controllers;
+package gestorenvios.ui.console.controllers;
 
 import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 import gestorenvios.models.exceptions.pedidos.ActualizacionPedidoException;
 import gestorenvios.services.GenericPedidosService;
-import gestorenvios.ui.InputReader;
-import gestorenvios.ui.Paginador;
-import gestorenvios.ui.PedidoPrinter;
+import gestorenvios.ui.console.input.InputReader;
+import gestorenvios.ui.console.utils.Paginador;
+import gestorenvios.ui.console.output.PedidoPrinter;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-public class PedidoController {
+public class PedidoConsoleController {
 
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
-    public PedidoController(GenericPedidosService<Pedido> pedidoService, InputReader input) {
+    public PedidoConsoleController(GenericPedidosService<Pedido> pedidoService, InputReader input) {
         this.pedidoService = pedidoService;
         this.input = input;
     }

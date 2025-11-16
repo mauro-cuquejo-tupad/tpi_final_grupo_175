@@ -4,7 +4,7 @@
  */
 package gestorenvios.main;
 
-import gestorenvios.ui.AppMenu;
+import gestorenvios.ui.console.AppMenu;
 
 /**
  *

@@ -1,5 +1,5 @@
 // java
-package gestorenvios.ui;
+package gestorenvios.ui.console.output;
 
 import gestorenvios.entities.Envio;
 

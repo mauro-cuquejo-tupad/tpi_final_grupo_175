@@ -1,4 +1,6 @@
-package gestorenvios.ui;
+package gestorenvios.ui.console.utils;
+
+import gestorenvios.ui.console.input.InputReader;
 
 import java.util.List;
 import java.util.function.BiFunction;

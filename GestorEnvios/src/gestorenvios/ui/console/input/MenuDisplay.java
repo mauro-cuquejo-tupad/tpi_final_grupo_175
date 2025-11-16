@@ -1,4 +1,4 @@
-package gestorenvios.ui;
+package gestorenvios.ui.console.input;
 
 public class MenuDisplay {
 

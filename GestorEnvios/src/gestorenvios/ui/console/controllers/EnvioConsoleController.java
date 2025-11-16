@@ -1,27 +1,27 @@
-package gestorenvios.controllers;
+package gestorenvios.ui.console.controllers;
 
 import gestorenvios.entities.*;
 import gestorenvios.models.exceptions.envios.ActualizacionEnvioException;
 import gestorenvios.models.exceptions.envios.EliminacionEnvioException;
 import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
-import gestorenvios.ui.EnvioPrinter;
-import gestorenvios.ui.InputReader;
-import gestorenvios.ui.Paginador;
+import gestorenvios.ui.console.output.EnvioPrinter;
+import gestorenvios.ui.console.input.InputReader;
+import gestorenvios.ui.console.utils.Paginador;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-public class EnvioController {
+public class EnvioConsoleController {
 
     private final GenericEnviosService<Envio, Pedido> envioService;
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
-    public EnvioController(GenericEnviosService<Envio, Pedido> envioService,
-                           GenericPedidosService<Pedido> pedidoService,
-                           InputReader input) {
+    public EnvioConsoleController(GenericEnviosService<Envio, Pedido> envioService,
+                                  GenericPedidosService<Pedido> pedidoService,
+                                  InputReader input) {
         this.envioService = envioService;
         this.pedidoService = pedidoService;
         this.input = input;

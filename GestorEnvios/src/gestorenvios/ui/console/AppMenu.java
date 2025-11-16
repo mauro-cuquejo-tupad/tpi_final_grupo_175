@@ -1,4 +1,4 @@
-package gestorenvios.ui;
+package gestorenvios.ui.console;
 
 import gestorenvios.dao.EnvioDAO;
 import gestorenvios.dao.PedidoDAO;
@@ -8,6 +8,10 @@ import gestorenvios.services.EnvioServiceImpl;
 import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.services.PedidoServiceImpl;
+import gestorenvios.ui.console.controllers.MenuHandler;
+import gestorenvios.ui.console.input.ConsoleInputReader;
+import gestorenvios.ui.console.input.InputReader;
+import gestorenvios.ui.console.input.MenuDisplay;
 
 import java.util.Scanner;
 
