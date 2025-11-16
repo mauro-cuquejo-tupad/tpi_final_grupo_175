@@ -1,9 +1,11 @@
 package gestorenvios.ui.console.controllers;
 
+import gestorenvios.entities.Envio;
 import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
+import gestorenvios.ui.console.output.EnvioPrinter;
 import gestorenvios.ui.console.output.PedidoPrinter;
 import gestorenvios.ui.console.utils.Paginador;
 
@@ -52,7 +54,7 @@ public class PedidoConsoleController {
                         try {
                             return pedidoService.buscarTodos(cantidad, pagina);
                         } catch (Exception e) {
-                            System.out.println("❌ Error al obtener envíos: " + e.getMessage());
+                            System.out.println("❌ Error al obtener pedidos: " + e.getMessage());
                             return List.of();
                         }
                     },
@@ -71,7 +73,7 @@ public class PedidoConsoleController {
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
             PedidoPrinter.mostrarResumen(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por Numero: " + e.getMessage());
         }
     }
 
@@ -83,7 +85,7 @@ public class PedidoConsoleController {
             PedidoPrinter.mostrarResumen(p);
             return p;
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
             return null;
         }
     }
@@ -96,8 +98,33 @@ public class PedidoConsoleController {
             PedidoPrinter.mostrarResumen(p);
             return p;
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por ID: " + e.getMessage());
             return null;
+        }
+    }
+
+    public void buscarPorCliente() {
+        System.out.println("\n--- BUSCAR PEDIDO POR CLIENTE ---");
+        try {
+            String clienteNombre = input.prompt("Ingrese Cliente de pedido: ");
+            Long total = pedidoService.obtenerCantidadTotalDePedidosPorCliente(clienteNombre);
+            System.out.println("Total de pedidos registrados: " + total);
+
+            Paginador<Pedido> paginador = new Paginador<>(50L, input);
+            paginador.paginar(
+                    (cantidad, pagina) -> {
+                        try {
+                            return pedidoService.buscarPorCliente(clienteNombre,cantidad, pagina);
+                        } catch (Exception e) {
+                            System.out.println("❌ Error al obtener pedidos: " + e.getMessage());
+                            return List.of();
+                        }
+                    },
+                    lista -> lista.forEach(PedidoPrinter::mostrarResumen),
+                    total
+            );
+        } catch (Exception e) {
+            System.out.println("❌ Error al buscar por Cliente: " + e.getMessage());
         }
     }
 

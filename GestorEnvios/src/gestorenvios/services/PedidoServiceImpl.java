@@ -91,6 +91,15 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
+    public List<Pedido> buscarPorCliente(String cliente, Long cantidad, Long pagina) {
+        try {
+            return pedidoDAO.buscarPorClienteNombre(cliente, cantidad, pagina);
+        } catch (Exception e) {
+            throw new ConsultaEntityException("Error al buscar pedido por Cliente: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void actualizar(Pedido pedido, Connection conn) throws ActualizacionEntityException {
         try {
             pedidoDAO.actualizar(pedido, conn);
@@ -121,6 +130,15 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     public Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException {
         try {
             return pedidoDAO.obtenerCantidadTotalDePedidos();
+        } catch (SQLException e) {
+            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Long obtenerCantidadTotalDePedidosPorCliente(String clienteNombre) {
+        try {
+            return pedidoDAO.obtenerCantidadTotalDePedidosPorNombre(clienteNombre);
         } catch (SQLException e) {
             throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
         }

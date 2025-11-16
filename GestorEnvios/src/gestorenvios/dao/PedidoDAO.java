@@ -20,6 +20,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     private static final String QUERY_BASE = "SELECT" + CAMPOS_PEDIDO + " FROM Pedido p";
 
     public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Pedido WHERE eliminado = FALSE";
+    public static final String COUNT_SQL_BY_NAME = "SELECT COUNT(*) AS total FROM Pedido p"
+            + " WHERE p.eliminado = FALSE AND (UPPER(p.cliente_nombre) LIKE ?)";
 
     /* Query de inserción de pedido.*/
     private static final String INSERT_SQL = "INSERT INTO Pedido (numero, fecha, cliente_nombre, total, id_estado_pedido, id_envio) VALUES (?, ?, ?, ?, ?, ?)";
@@ -70,7 +72,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      */
     private static final String SEARCH_BY_NAME_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
-            + " WHERE p.eliminado = FALSE AND (p.cliente_nombre LIKE ?)";
+            + " WHERE p.eliminado = FALSE AND (UPPER(p.cliente_nombre) LIKE ?)"
+            + " LIMIT ? OFFSET ?";
 
     /**
      * Query de búsqueda exacta por NÚMERO de pedido. Incluye LEFT JOIN con
@@ -422,25 +425,32 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * <p>
      * Patrón de búsqueda: LIKE "%filtro%" en clienteNombre
      *
-     * @param filtro Texto a buscar en el nombre del cliente (no puede estar
+     * @param nombre Texto a buscar en el nombre del cliente (no puede estar
      *               vacío)
      * @return Lista de pedidos que coinciden con el filtro (puede estar vacía)
      * @throws Exception Si hay error de BD
      */
-    public List<Pedido> buscarPorClienteNombre(String filtro) throws Exception {
-        if (filtro == null || filtro.trim().isEmpty()) {
-            throw new IllegalArgumentException("El filtro de búsqueda no puede estar vacío");
+    public List<Pedido> buscarPorClienteNombre(String nombre, Long cantidad, Long pagina) throws Exception {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("El Nombre del Cliente no puede estar vacío");
         }
 
         List<Pedido> pedidos = new ArrayList<>();
 
-        // Usamos la constante SEARCH_BY_NAME_SQL
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NAME_SQL)) {
+        long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
+        long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
 
-            // Construimos el patrón LIKE: %filtro%
-            String searchPattern = "%" + filtro + "%";
+        long offset = (numeroPagina - 1L) * registrosPorPagina;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NAME_SQL)) {
+
+            // Construimos el patrón LIKE: %nombre%
+            String searchPattern = "%" + nombre.toUpperCase() + "%";
 
             pstmt.setString(1, searchPattern);
+            pstmt.setLong(2, registrosPorPagina); // LIMIT
+            pstmt.setLong(3, offset);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -449,7 +459,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
                 }
             }
         } catch (SQLException e) {
-            throw new Exception("Error al buscar pedidos por nombre de cliente: " + e.getMessage(), e);
+            throw new SQLException("Error al buscar pedidos por nombre de cliente: " + e.getMessage(), e);
         }
         return pedidos;
     }
@@ -644,6 +654,24 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL);
              ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                cantidad = rs.getLong("total");
+            }
+        }
+        return cantidad;
+    }
+
+    public Long obtenerCantidadTotalDePedidosPorNombre(String nombre) throws SQLException {
+        long cantidad = 0L;
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL_BY_NAME)) {
+            // Construimos el patrón LIKE: %nombre%
+            String searchPattern = "%" + nombre + "%";
+
+            pstmt.setString(1, searchPattern);
+
+            ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
                 cantidad = rs.getLong("total");

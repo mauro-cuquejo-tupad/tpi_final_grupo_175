@@ -101,5 +101,9 @@ public class MenuHandler {
     public void eliminarEnvioPorId() {
         envioConsoleController.eliminarEnvioPorId();
     }
+
+    public void buscarPedidoPorCliente() {
+        pedidoConsoleController.buscarPorCliente();
+    }
 }
 

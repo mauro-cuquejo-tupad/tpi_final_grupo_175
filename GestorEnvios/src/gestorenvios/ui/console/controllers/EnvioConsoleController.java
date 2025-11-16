@@ -73,7 +73,7 @@ public class EnvioConsoleController {
             EnvioPrinter.mostrarResumen(envio);
             return envio;
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
             return null;
         }
     }
@@ -87,7 +87,7 @@ public class EnvioConsoleController {
             Envio envio = p.getEnvio();
             EnvioPrinter.mostrarResumen(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por Numero Pedido: " + e.getMessage());
         }
     }
 
@@ -97,7 +97,7 @@ public class EnvioConsoleController {
             Envio envio = envioService.buscarPorId(input.leerLong("Ingrese ID de pedido: "));
             EnvioPrinter.mostrarResumen(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar: " + e.getMessage());
+            System.out.println("❌ Error al buscar por ID: " + e.getMessage());
         }
     }
 
