@@ -1,5 +1,6 @@
 package gestorenvios.services;
 
+import com.mysql.cj.util.StringUtils;
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.EnvioDAO;
@@ -9,6 +10,7 @@ import gestorenvios.entities.Pedido;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
@@ -22,9 +24,23 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public void crear(Envio envio) throws Exception {
-        System.out.println("Creando envio: " + envio);
-        //TODO: validar envio
+        validarEnvio(envio);
         envioDAO.insertar(envio);
+    }
+
+    private void validarEnvio(Envio envio) {
+        if (StringUtils.isNullOrEmpty(envio.getTracking())) {
+            throw new IllegalArgumentException("El numero de tracking no puede estar vacío.");
+        }
+        if (envio.getCosto() < 0) {
+            throw new IllegalArgumentException("El total del pedido no puede negativo.");
+        }
+        if(envio.getFechaDespacho().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de despacho no puede ser anterior a la fecha actual.");
+        }
+        if(envio.getFechaEstimada().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha estimada no puede ser anterior a la fecha actual.");
+        }
     }
 
     @Override
