@@ -29,20 +29,25 @@ public class Paginador<T> {
         }
 
         long page = 1L;
-        boolean cont = true;
 
-        while (cont) {
+        boolean continuar = true;
+        while (continuar) {
             List<T> lista = fetcher.apply(pageSize, page);
-            if (lista == null || lista.isEmpty()) break;
-            consumer.accept(lista);
 
-            if (totalCount <= pageSize * page) break;
+            if (lista != null && !lista.isEmpty()) {
+                consumer.accept(lista);
 
-            System.out.print("Presione Enter para ver más o 'q' para salir: ");
-            String in = input.nextLine().trim();
-            if ("q".equalsIgnoreCase(in)) break;
-
-            page++;
+                if (totalCount > pageSize * page) {
+                    System.out.print("Presione Enter para ver más o 'q' para salir: ");
+                    String in = input.nextLine().trim();
+                    continuar = !"q".equalsIgnoreCase(in);
+                    page++;
+                } else {
+                    continuar = false;
+                }
+            } else {
+                continuar = false;
+            }
         }
     }
 }

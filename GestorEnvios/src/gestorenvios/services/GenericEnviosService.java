@@ -11,4 +11,6 @@ public interface GenericEnviosService<T, U> extends GenericService<T> {
     Long obtenerCantidadTotalDeEnvios() throws ConsultaEntityException;
 
     String crearEnvioYActualizarPedido(T envio, U pedido) throws CreacionEntityException;
+
+    void actualizarEstado(T envio, U pedido);
 }

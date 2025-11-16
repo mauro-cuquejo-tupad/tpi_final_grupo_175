@@ -1,8 +1,6 @@
 // java
 package gestorenvios.ui.console.input;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class ConsoleInputReader implements InputReader {
@@ -29,7 +27,7 @@ public class ConsoleInputReader implements InputReader {
             try {
                 System.out.print(mensaje);
                 return Double.parseDouble(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.out.println("Error: Ingrese un monto válido.");
             }
         }
@@ -41,24 +39,8 @@ public class ConsoleInputReader implements InputReader {
             try {
                 System.out.print(mensaje);
                 return Long.parseLong(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.out.println("Error: Ingrese un número válido.");
-            }
-        }
-    }
-
-    @Override
-    public LocalDate leerFecha(String mensaje) {
-        while (true) {
-            try {
-                System.out.print(mensaje);
-                String fechaStr = scanner.nextLine().trim();
-                if (fechaStr.isEmpty()) {
-                    return null;
-                }
-                return LocalDate.parse(fechaStr);
-            } catch (DateTimeParseException e) {
-                System.out.println("Error: Formato inválido. Use AAAA-MM-DD.");
             }
         }
     }

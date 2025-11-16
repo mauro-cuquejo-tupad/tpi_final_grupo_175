@@ -123,15 +123,30 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
             transactionManager.startTransaction();
             envioDAO.insertarTx(envio, conn);
-            // actualizo el pedido con el envio creado
             pedido.setEnvio(envio);
-            // actualizo el estado del pedido
-            pedido.setEstado(EstadoPedido.ENVIADO);
+            pedido.setEstado(EstadoPedido.FACTURADO);
             pedidosService.actualizarTx(pedido, conn);
             transactionManager.commit();
             return envio.getTracking();
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el envío y actualizar el pedido: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void actualizarEstado(Envio envio, Pedido pedido) {
+        validarEnvio(envio);
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
+
+            transactionManager.startTransaction();
+            envioDAO.actualizarTx(envio, conn);
+            pedido.setEstado(EstadoPedido.ENVIADO);
+            pedidosService.actualizarTx(pedido, conn);
+            transactionManager.commit();
+        } catch (Exception e) {
+            throw new CreacionEntityException("Error al actualizar estado del envío: " + e.getMessage());
+        }
+
     }
 }

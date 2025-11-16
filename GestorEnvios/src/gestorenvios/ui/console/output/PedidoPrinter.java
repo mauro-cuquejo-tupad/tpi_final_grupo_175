@@ -4,6 +4,10 @@ package gestorenvios.ui.console.output;
 import gestorenvios.entities.Pedido;
 
 public class PedidoPrinter {
+
+    private PedidoPrinter() {
+        // Constructor privado para evitar instanciación
+    }
     public static void mostrarResumen(Pedido p) {
         if (p == null) {
             System.out.println("❌ No se encontró el pedido.");

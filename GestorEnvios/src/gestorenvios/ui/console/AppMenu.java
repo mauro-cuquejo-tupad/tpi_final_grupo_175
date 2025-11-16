@@ -142,24 +142,22 @@ public class AppMenu {
             case 4 -> menuHandler.buscarPedidoPorTracking();
             case 5 -> menuHandler.buscarPedidoPorId();
             case 6 -> menuHandler.buscarPedidoPorCliente();
-            case 7 -> menuHandler.actualizarPedidoPorNumero();
-            case 8 -> menuHandler.actualizarPedidoPorId();
-            case 9 -> menuHandler.eliminarPedidoPorNumero();
-            case 10 -> menuHandler.eliminarPedidoPorId();
-            case 11 -> menuHandler.eliminarEnvioDePedido();
+            case 7 -> menuHandler.eliminarPedidoPorNumero();
+            case 8 -> menuHandler.eliminarPedidoPorId();
+            case 9 -> menuHandler.eliminarEnvioDePedido();
 
             //envios
-            case 12 -> menuHandler.crearEnvio();
-            case 13 -> menuHandler.listarEnvios();
-            case 14 -> menuHandler.buscarEnvioPorTracking();
-            case 15 -> menuHandler.buscarEnvioPorNumeroPedido();
-            case 16 -> menuHandler.buscarEnvioPorId();
-            case 17 -> menuHandler.actualizarEnvioPorTracking();
-            case 18 -> menuHandler.actualizarEnvioPorNumeroPedido();
-            case 19 -> menuHandler.actualizarEnvioPorId();
-            case 20 -> menuHandler.eliminarEnvioPorTracking();
-            case 21 -> menuHandler.eliminarEnvioPorNumeroPedido();
-            case 22 -> menuHandler.eliminarEnvioPorId();
+            case 10 -> menuHandler.crearEnvio();
+            case 11 -> menuHandler.listarEnvios();
+            case 12 -> menuHandler.buscarEnvioPorTracking();
+            case 13 -> menuHandler.buscarEnvioPorNumeroPedido();
+            case 14 -> menuHandler.buscarEnvioPorId();
+            case 15 -> menuHandler.actualizarEstadoEnvioPorTracking();
+            case 16 -> menuHandler.actualizarEstadoEnvioPorNumeroPedido();
+            case 17 -> menuHandler.actualizarEstadoEnvioPorId();
+            case 18 -> menuHandler.eliminarEnvioPorTracking();
+            case 19 -> menuHandler.eliminarEnvioPorNumeroPedido();
+            case 20 -> menuHandler.eliminarEnvioPorId();
 
             //salir
             case 0 -> {

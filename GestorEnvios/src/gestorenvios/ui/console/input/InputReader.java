@@ -1,7 +1,5 @@
 package gestorenvios.ui.console.input;
 
-import java.time.LocalDate;
-
 public interface InputReader {
     String nextLine();
 
@@ -10,8 +8,6 @@ public interface InputReader {
     double leerDouble(String mensaje);
 
     Long leerLong(String mensaje);
-
-    LocalDate leerFecha(String mensaje);
 
     String leerNumeroPedido(String mensaje);
 

@@ -38,14 +38,6 @@ public class MenuHandler {
         pedidoConsoleController.buscarPorId();
     }
 
-    public void actualizarPedidoPorNumero() {
-        pedidoConsoleController.actualizarPedidoPorNumero();
-    }
-
-    public void actualizarPedidoPorId() {
-        pedidoConsoleController.actualizarPedidoPorId();
-    }
-
     public void eliminarPedidoPorNumero() {
         pedidoConsoleController.eliminarPedidoPorNumero();
     }
@@ -78,16 +70,16 @@ public class MenuHandler {
         envioConsoleController.buscarPorId();
     }
 
-    public void actualizarEnvioPorTracking() {
-        envioConsoleController.actualizarPorTracking();
+    public void actualizarEstadoEnvioPorTracking() {
+        envioConsoleController.actualizarEstadoPorTracking();
     }
 
-    public void actualizarEnvioPorNumeroPedido() {
-        envioConsoleController.actualizarEnvioPorNumeroPedido();
+    public void actualizarEstadoEnvioPorNumeroPedido() {
+        envioConsoleController.actualizarEstadoEnvioPorNumeroPedido();
     }
 
-    public void actualizarEnvioPorId() {
-        envioConsoleController.actualizarEnvioPorId();
+    public void actualizarEstadoEnvioPorId() {
+        envioConsoleController.actualizarEstadoEnvioPorId();
     }
 
     public void eliminarEnvioPorTracking() {
