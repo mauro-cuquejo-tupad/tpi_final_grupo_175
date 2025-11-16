@@ -116,6 +116,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public void crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
+        validarEnvio(envio);
         TransactionManager transactionManager = null;
         try {
             Connection conn = DatabaseConnection.getConnection();
