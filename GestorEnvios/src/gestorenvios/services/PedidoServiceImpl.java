@@ -5,6 +5,10 @@ import gestorenvios.config.DatabaseConnection;
 import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.PedidoDAO;
 import gestorenvios.entities.Pedido;
+import gestorenvios.models.exceptions.ActualizacionEntityException;
+import gestorenvios.models.exceptions.ConsultaEntityException;
+import gestorenvios.models.exceptions.CreacionEntityException;
+import gestorenvios.models.exceptions.EliminacionEntityException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,11 +22,15 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void crear(Pedido pedido) throws Exception {
-        validarPedido(pedido);
-        pedido.setNumero(generarNuevoNumeroPedido());
+    public void crear(Pedido pedido) throws CreacionEntityException {
+        try {
+            validarPedido(pedido);
+            pedido.setNumero(generarNuevoNumeroPedido());
 
-        pedidoDAO.insertar(pedido);
+            pedidoDAO.insertar(pedido);
+        } catch (Exception e) {
+            throw new CreacionEntityException("Error al crear el pedido: " + e.getMessage());
+        }
     }
 
     private String generarNuevoNumeroPedido() throws SQLException {
@@ -47,53 +55,89 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws Exception {
-        return pedidoDAO.buscarTodos(cantidad, pagina);
+    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws ConsultaEntityException {
+        try {
+            return pedidoDAO.buscarTodos(cantidad, pagina);
+        } catch (Exception e) {
+            throw new ConsultaEntityException("Error al listar pedidos: " + e.getMessage());
+        }
     }
 
     @Override
-    public Pedido buscarPorId(Long id) {
-        return null;
+    public Pedido buscarPorId(Long id) throws ConsultaEntityException {
+        try {
+            return pedidoDAO.buscarPorId(id);
+        } catch (Exception e) {
+            throw new ConsultaEntityException("Error al buscar pedido por ID: " + e.getMessage());
+        }
     }
 
     @Override
-    public void actualizar(Pedido pedido, Connection conn) throws Exception {
-        pedidoDAO.actualizar(pedido, conn);
+    public Pedido buscarPorNumeroPedido(String numero) throws ConsultaEntityException {
+        try {
+            return pedidoDAO.buscarPorNumero(numero);
+        } catch (Exception e) {
+            throw new ConsultaEntityException("Error al buscar pedido por número: " + e.getMessage());
+        }
     }
 
     @Override
-    public void actualizar(Pedido pedido) throws Exception {
-        pedidoDAO.actualizar(pedido);
+    public Pedido buscarPorNumeroTracking(String tracking) throws ConsultaEntityException {
+        try {
+            return pedidoDAO.buscarPorTracking(tracking);
+        } catch (Exception e) {
+            throw new ConsultaEntityException("Error al buscar pedido por número de tracking: " + e.getMessage());
+        }
     }
 
     @Override
-    public void eliminar(Long id) throws Exception {
-        pedidoDAO.eliminarLogico(id);
+    public void actualizar(Pedido pedido, Connection conn) throws ActualizacionEntityException {
+        try {
+            pedidoDAO.actualizar(pedido, conn);
+        } catch (Exception e) {
+            throw new ActualizacionEntityException("Error al actualizar el pedido (transaccional): " + e.getMessage());
+        }
     }
 
     @Override
-    public Pedido buscarPorNumeroPedido(String numero) throws Exception {
-        return pedidoDAO.buscarPorNumero(numero);
+    public void actualizar(Pedido pedido) throws ActualizacionEntityException {
+        try {
+            pedidoDAO.actualizar(pedido);
+        } catch (Exception e) {
+            throw new ActualizacionEntityException("Error al actualizar el pedido: " + e.getMessage());
+        }
     }
 
     @Override
-    public Pedido buscarPorNumeroTracking(String tracking) throws Exception {
-        return pedidoDAO.buscarPorTracking(tracking);
+    public void eliminar(Long id) throws EliminacionEntityException {
+        try {
+            pedidoDAO.eliminarLogico(id);
+        } catch (Exception e) {
+            throw new EliminacionEntityException("Error al eliminar el pedido: " + e.getMessage());
+        }
     }
 
     @Override
-    public Long obtenerCantidadTotalDePedidos() throws Exception {
-        return pedidoDAO.obtenerCantidadTotalDePedidos();
+    public Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException {
+        try {
+            return pedidoDAO.obtenerCantidadTotalDePedidos();
+        } catch (SQLException e) {
+            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
+        }
     }
 
     @Override
-    public void eliminarPorNumero(String numero) throws Exception {
-        pedidoDAO.eliminarLogicoPorNumero(numero);
+    public void eliminarPorNumero(String numero) throws EliminacionEntityException {
+        try {
+            pedidoDAO.eliminarLogicoPorNumero(numero);
+        } catch (Exception e) {
+            throw new EliminacionEntityException("Error al eliminar el pedido por número: " + e.getMessage());
+        }
 
     }
 
     @Override
-    public void eliminarEnvioDePedido(Long idPedido) throws Exception {
+    public void eliminarEnvioDePedido(Long idPedido) throws EliminacionEntityException {
         TransactionManager transactionManager = null;
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -107,7 +151,7 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
             if (transactionManager != null) {
                 transactionManager.rollback();
             }
-            throw e;
+            throw new EliminacionEntityException("Error al eliminar el envío del pedido: " + e.getMessage());
         } finally {
             // Cerrar el TransactionManager y la conexión
             // Esto se hace en el método close() del TransactionManager

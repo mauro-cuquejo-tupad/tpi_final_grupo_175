@@ -1,13 +1,14 @@
 package gestorenvios.services;
 
-import java.sql.SQLException;
+import gestorenvios.models.exceptions.ConsultaEntityException;
+import gestorenvios.models.exceptions.CreacionEntityException;
 
 public interface GenericEnviosService<T, U> extends GenericService<T> {
-    T buscarPorTracking(String tracking) throws Exception;
+    T buscarPorTracking(String tracking) throws ConsultaEntityException;
 
-    T buscarPorNumeroPedido(String numero) throws Exception;
+    T buscarPorNumeroPedido(String numero) throws ConsultaEntityException;
 
-    Long obtenerCantidadTotalDeEnvios() throws SQLException;
+    Long obtenerCantidadTotalDeEnvios() throws ConsultaEntityException;
 
-    void crearEnvioYActualizarPedido(T envio, U pedido) throws Exception;
+    void crearEnvioYActualizarPedido(T envio, U pedido) throws CreacionEntityException;
 }

@@ -2,7 +2,6 @@ package gestorenvios.dao;
 
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.entities.*;
-import gestorenvios.models.exceptions.pedidos.CreacionPedidoException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -106,7 +105,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             insertar(pedido, conn);
         } catch (SQLException e) {
             // Captura el error de SQL y lo relanza como una excepción específica
-            throw new CreacionPedidoException("Error al insertar el pedido: " + e.getMessage());
+            throw new SQLException("Error al insertar el pedido: " + e.getMessage());
         }
     }
 

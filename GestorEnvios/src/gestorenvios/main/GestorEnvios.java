@@ -16,14 +16,8 @@ public class GestorEnvios {
         // Constructor privado para evitar instanciación
     }
 
-    /**
-     *
-     */
-    static void main() {
+    static public void main(String[] args) {
         AppMenu app = new AppMenu();
         app.run();
-
-
     }
-
 }

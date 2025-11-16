@@ -1,15 +1,20 @@
 package gestorenvios.services;
 
+import gestorenvios.models.exceptions.ActualizacionEntityException;
+import gestorenvios.models.exceptions.ConsultaEntityException;
+import gestorenvios.models.exceptions.CreacionEntityException;
+import gestorenvios.models.exceptions.EliminacionEntityException;
+
 import java.util.List;
 
 public interface GenericService<T> {
-    void crear(T entity) throws Exception;
+    void crear(T entity) throws CreacionEntityException;
 
-    List<T> buscarTodos(Long cantidad, Long pagina) throws Exception;
+    List<T> buscarTodos(Long cantidad, Long pagina) throws ConsultaEntityException;
 
-    T buscarPorId(Long id) throws Exception;
+    T buscarPorId(Long id) throws ConsultaEntityException;
 
-    void actualizar(T entity) throws Exception;
+    void actualizar(T entity) throws ActualizacionEntityException;
 
-    void eliminar(Long id) throws Exception;
+    void eliminar(Long id) throws EliminacionEntityException;
 }

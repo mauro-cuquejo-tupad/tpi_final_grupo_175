@@ -72,7 +72,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         try (Connection conn = DatabaseConnection.getConnection()) {
             insertar(envio, conn);
         } catch (SQLException e) {
-            throw new Exception("Error al insertar el envío: " + e.getMessage(), e);
+            throw new SQLException("Error al insertar el envío: " + e.getMessage(), e);
         }
     }
 

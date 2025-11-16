@@ -1,12 +1,10 @@
 package gestorenvios.ui.console.controllers;
 
 import gestorenvios.entities.*;
-import gestorenvios.models.exceptions.envios.ActualizacionEnvioException;
-import gestorenvios.models.exceptions.envios.EliminacionEnvioException;
 import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
-import gestorenvios.ui.console.output.EnvioPrinter;
 import gestorenvios.ui.console.input.InputReader;
+import gestorenvios.ui.console.output.EnvioPrinter;
 import gestorenvios.ui.console.utils.Paginador;
 
 import java.time.LocalDate;
@@ -105,28 +103,31 @@ public class EnvioConsoleController {
 
     public void actualizarPorTracking() {
         System.out.println("\n--- ACTUALIZAR ENVÍO (POR TRACKING) ---");
+        Envio envio;
         try {
-            Envio envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
-            actualizar(envio);
-            System.out.println("✅ Envío actualizado correctamente.");
+            envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar envío: " + e.getMessage());
+            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            return;
         }
+        actualizar(envio);
     }
 
     public void actualizarEnvioPorId() {
         System.out.println("\n--- ACTUALIZAR ENVÍO (POR ID) ---");
+        Envio envio;
         try {
-            Envio envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a modificar: "));
-            actualizar(envio);
-            System.out.println("✅ Envío actualizado correctamente.");
+            envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a modificar: "));
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar envío: " + e.getMessage());
+            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            return;
         }
+        actualizar(envio);
     }
 
     public void actualizarEnvioPorNumeroPedido() {
         System.out.println("\n--- ACTUALIZAR ENVÍO DE UN PEDIDO ---");
+        Envio envio;
         try {
             Pedido pedido = pedidoService.buscarPorNumeroPedido(
                     input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: "));
@@ -142,52 +143,53 @@ public class EnvioConsoleController {
                 System.out.println("Use la opción 'Actualizar Pedido' para asignarle uno nuevo.");
                 return;
             }
-
-            Envio envio = pedido.getEnvio();
-            actualizar(envio);
-            System.out.println("✅ Envío del pedido actualizado correctamente.");
-
+            envio = pedido.getEnvio();
         } catch (Exception e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            return;
+        }
+        actualizar(envio);
+    }
+
+    private void actualizar(Envio envio) {
+        if (envio == null) {
+            System.out.println("❌ Envio no encontrado.");
+            return;
+        }
+
+        System.out.println("--- Editando Envío: " + envio.getTracking() + " ---");
+        System.out.println("(Presione Enter para mantener el valor actual)");
+
+        String tracking = input.prompt("Nuevo Tracking (" + envio.getTracking() + "): ").trim();
+        if (!tracking.isEmpty()) envio.setTracking(tracking);
+
+        actualizarCostoEnvio(envio,
+                input.prompt("Nuevo Costo (" + envio.getCosto() + "): ").trim());
+
+        actualizarFechaDespacho(envio,
+                input.prompt("Nueva Fecha Despacho (" + envio.getFechaDespacho() + "): ").trim());
+
+        actualizarFechaEstimada(envio,
+                input.prompt("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ").trim());
+
+        actualizarEstado(envio);
+
+        try {
+            envioService.actualizar(envio);
+            System.out.println("✅ Envío actualizado correctamente.");
+        } catch (Exception e) {
+            System.out.println("❌ Error al actualizar envío: " + e.getMessage());
         }
     }
 
-    private void actualizar(Envio envio) throws Exception {
-        if (envio == null) {
-            throw new ActualizacionEnvioException("❌ No se encontró ningún envío con ese ID.");
+    private void actualizarEstado(Envio envio) {
+        System.out.println("Estado actual: " + envio.getEstado());
+        if (input.prompt("¿Desea cambiar el estado? (s/n): ").trim().equalsIgnoreCase("s")) {
+            envio.setEstado(elegirEstadoEnvio());
         }
+    }
 
-        System.out.println("--- Editando Envío ID: " + envio.getId() + " ---");
-        System.out.println("(Presione Enter para mantener el valor actual)");
-
-        // Actualizar Tracking
-        System.out.print("Nuevo Tracking (" + envio.getTracking() + "): ");
-        String tracking = input.nextLine().trim();
-
-        if (!tracking.isEmpty()) {
-            envio.setTracking(tracking);
-        }
-
-        // Actualizar Costo
-        System.out.print("Nuevo Costo (" + envio.getCosto() + "): ");
-        String costoStr = input.nextLine().trim();
-        if (!costoStr.isEmpty()) {
-            try {
-                double costo = Double.parseDouble(costoStr);
-                if (envio.getCosto() < 0) {
-                    System.out.println("⚠ El costo no puede ser negativo. Se mantiene el costo anterior.");
-                } else {
-                    envio.setCosto(costo);
-                }
-
-            } catch (NumberFormatException _) {
-                System.out.println("⚠ Formato incorrecto. Se mantiene el costo anterior.");
-            }
-        }
-
-        // Actualizar Fechas
-        System.out.print("Nueva Fecha Despacho (" + envio.getFechaDespacho() + "): ");
-        String fDespacho = input.nextLine().trim();
+    private static void actualizarFechaDespacho(Envio envio, String fDespacho) {
         if (!fDespacho.isEmpty()) {
             try {
                 envio.setFechaDespacho(LocalDate.parse(fDespacho));
@@ -195,25 +197,31 @@ public class EnvioConsoleController {
                 System.out.println("⚠ Fecha inválida. Se mantiene la anterior.");
             }
         }
+    }
 
-        LocalDate fEstimada = input.leerFecha("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ");
-        if (fEstimada != null) {
+    private static void actualizarFechaEstimada(Envio envio, String fEstimada) {
+        if (!fEstimada.isEmpty()) {
             try {
-                envio.setFechaEstimada(fEstimada);
+                envio.setFechaEstimada(LocalDate.parse(fEstimada));
             } catch (DateTimeParseException _) {
                 System.out.println("⚠ Fecha inválida. Se mantiene la anterior.");
             }
         }
+    }
 
-        // Actualizar Estado (Enum)
-        System.out.println("Estado actual: " + envio.getEstado());
-        System.out.print("¿Desea cambiar el estado? (s/n): ");
-        if (input.nextLine().trim().equalsIgnoreCase("s")) {
-            envio.setEstado(elegirEstadoEnvio());
+    private static void actualizarCostoEnvio(Envio envio, String costoStr) {
+        if (!costoStr.isEmpty()) {
+            try {
+                double costo = Double.parseDouble(costoStr);
+                if (costo <= 0) {
+                    System.out.println("⚠ El costo debe ser un valor positivo. Se mantiene el costo anterior.");
+                } else {
+                    envio.setCosto(costo);
+                }
+            } catch (NumberFormatException _) {
+                System.out.println("⚠ Formato incorrecto. Se mantiene el costo anterior.");
+            }
         }
-
-        // Llamada al Service para guardar cambios
-        envioService.actualizar(envio);
     }
 
     public void eliminarEnvioPorTracking() {
@@ -251,17 +259,22 @@ public class EnvioConsoleController {
         }
     }
 
-    private void eliminar(Envio envio) throws Exception {
+    private void eliminar(Envio envio) {
         if (envio == null) {
-            throw new EliminacionEnvioException("❌ El envío no existe.");
+            System.out.println("❌ El envío no existe.");
+            return;
         }
 
         System.out.print("¿Está seguro que desea eliminar el envío " + envio.getTracking() + "? (s/n): ");
         if (input.nextLine().trim().equalsIgnoreCase("s")) {
 
-            // Llamada real al Service
-            envioService.eliminar(envio.getId());
-            System.out.println("✅ Envío eliminado.");
+            try {
+                // Llamada real al Service
+                envioService.eliminar(envio.getId());
+                System.out.println("✅ Envío eliminado.");
+            } catch (Exception e) {
+                System.out.println("❌ Error al eliminar envío: " + e.getMessage());
+            }
         } else {
             System.out.println("Operación cancelada.");
         }
@@ -306,6 +319,4 @@ public class EnvioConsoleController {
         input.mostrarOpcionesEnum(valores);
         return valores[input.leerOpcionEnum(valores.length) - 1];
     }
-
-
 }

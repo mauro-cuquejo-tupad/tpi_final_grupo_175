@@ -2,11 +2,10 @@ package gestorenvios.ui.console.controllers;
 
 import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
-import gestorenvios.models.exceptions.pedidos.ActualizacionPedidoException;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
-import gestorenvios.ui.console.utils.Paginador;
 import gestorenvios.ui.console.output.PedidoPrinter;
+import gestorenvios.ui.console.utils.Paginador;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -132,9 +131,10 @@ public class PedidoConsoleController {
         }
     }
 
-    private void actualizar(Pedido pedido) throws Exception {
+    private void actualizar(Pedido pedido) {
         if (pedido == null) {
-            throw new ActualizacionPedidoException("Pedido no encontrado.");
+            System.out.println("❌ Pedido no encontrado.");
+            return;
         }
 
         System.out.println("Editando pedido: " + pedido.getNumero());
