@@ -4,8 +4,6 @@ import com.mysql.cj.util.StringUtils;
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.PedidoDAO;
-import gestorenvios.entities.Envio;
-import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 
 import java.sql.Connection;
@@ -106,14 +104,14 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
             transactionManager.commit();
         } catch (Exception e) {
             System.out.println("Error en la transacción: " + e.getMessage());
-            if(transactionManager != null) {
+            if (transactionManager != null) {
                 transactionManager.rollback();
             }
             throw e;
         } finally {
             // Cerrar el TransactionManager y la conexión
             // Esto se hace en el método close() del TransactionManager
-            if(transactionManager != null) {
+            if (transactionManager != null) {
                 transactionManager.close();
             }
         }
