@@ -140,25 +140,25 @@ public class PedidoConsoleController {
         System.out.println("Editando pedido: " + pedido.getNumero());
         System.out.println("(Presione Enter para mantener el valor actual)");
 
-        // Lógica para editar solo si el usuario escribe algo
-        System.out.print("Nuevo Cliente (" + pedido.getClienteNombre() + "): ");
-        String nuevoCliente = input.nextLine().trim();
-        if (!nuevoCliente.isEmpty()) {
-            pedido.setClienteNombre(nuevoCliente);
-        }
+        actualizarCliente(pedido);
+        actualizarTotal(pedido);
+        actualizarFechaPedido(pedido);
+        actualizarEstadoPedido(pedido);
 
-        // Actualizar TOTAL
-        System.out.print("Nuevo Total (" + pedido.getTotal() + "): ");
-        String totalStr = input.nextLine().trim();
-        if (!totalStr.isEmpty()) {
-            try {
-                pedido.setTotal(Double.parseDouble(totalStr));
-            } catch (NumberFormatException _) {
-                System.out.println("⚠ Formato de número incorrecto. Se mantiene el valor anterior.");
-            }
-        }
+        // Llamada al Service para guardar cambios
+        pedidoService.actualizar(pedido);
+        System.out.println("✅ Pedido actualizado.");
+    }
 
-        // Actualizar FECHA
+    private void actualizarEstadoPedido(Pedido pedido) {
+        System.out.println("Estado actual: " + pedido.getEstado());
+        System.out.print("¿Desea cambiar el estado? (s/n): ");
+        if (input.nextLine().trim().equalsIgnoreCase("s")) {
+            pedido.setEstado(elegirEstadoPedido()); // Reutilizamos método selector
+        }
+    }
+
+    private void actualizarFechaPedido(Pedido pedido) {
         System.out.print("Nueva Fecha (" + pedido.getFecha() + ") [AAAA-MM-DD]: ");
         String fechaStr = input.nextLine().trim();
         if (!fechaStr.isEmpty()) {
@@ -168,17 +168,26 @@ public class PedidoConsoleController {
                 System.out.println("⚠ Formato de fecha incorrecto. Se mantiene la fecha anterior.");
             }
         }
+    }
 
-        // Actualizar ESTADO (Enum)
-        System.out.println("Estado actual: " + pedido.getEstado());
-        System.out.print("¿Desea cambiar el estado? (s/n): ");
-        if (input.nextLine().trim().equalsIgnoreCase("s")) {
-            pedido.setEstado(elegirEstadoPedido()); // Reutilizamos método selector
+    private void actualizarTotal(Pedido pedido) {
+        System.out.print("Nuevo Total (" + pedido.getTotal() + "): ");
+        String totalStr = input.nextLine().trim();
+        if (!totalStr.isEmpty()) {
+            try {
+                pedido.setTotal(Double.parseDouble(totalStr));
+            } catch (NumberFormatException _) {
+                System.out.println("⚠ Formato de número incorrecto. Se mantiene el valor anterior.");
+            }
         }
+    }
 
-        // Llamada al Service para guardar cambios
-        pedidoService.actualizar(pedido);
-        System.out.println("✅ Pedido actualizado.");
+    private void actualizarCliente(Pedido pedido) {
+        System.out.print("Nuevo Cliente (" + pedido.getClienteNombre() + "): ");
+        String nuevoCliente = input.nextLine().trim();
+        if (!nuevoCliente.isEmpty()) {
+            pedido.setClienteNombre(nuevoCliente);
+        }
     }
 
     //ELIMINAR PEDIDOS

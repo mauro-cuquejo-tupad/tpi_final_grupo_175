@@ -161,12 +161,9 @@ public class EnvioConsoleController {
         System.out.println("(Presione Enter para mantener el valor actual)");
 
         actualizarTracking(envio);
-        actualizarCostoEnvio(envio,
-                input.prompt("Nuevo Costo (" + envio.getCosto() + "): ").trim());
-        actualizarFechaDespacho(envio,
-                input.prompt("Nueva Fecha Despacho (" + envio.getFechaDespacho() + "): ").trim());
-        actualizarFechaEstimada(envio,
-                input.prompt("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ").trim());
+        actualizarCostoEnvio(envio);
+        actualizarFechaDespacho(envio);
+        actualizarFechaEstimada(envio);
         actualizarEstado(envio);
 
         try {
@@ -189,7 +186,8 @@ public class EnvioConsoleController {
         }
     }
 
-    private static void actualizarFechaDespacho(Envio envio, String fDespacho) {
+    private void actualizarFechaDespacho(Envio envio) {
+        String fDespacho = input.prompt("Nueva Fecha Despacho (" + envio.getFechaDespacho() + "): ").trim();
         if (!fDespacho.isEmpty()) {
             try {
                 envio.setFechaDespacho(LocalDate.parse(fDespacho));
@@ -199,7 +197,8 @@ public class EnvioConsoleController {
         }
     }
 
-    private static void actualizarFechaEstimada(Envio envio, String fEstimada) {
+    private void actualizarFechaEstimada(Envio envio) {
+        String fEstimada = input.prompt("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ").trim();
         if (!fEstimada.isEmpty()) {
             try {
                 envio.setFechaEstimada(LocalDate.parse(fEstimada));
@@ -209,7 +208,8 @@ public class EnvioConsoleController {
         }
     }
 
-    private static void actualizarCostoEnvio(Envio envio, String costoStr) {
+    private void actualizarCostoEnvio(Envio envio) {
+        String costoStr = input.prompt("Nuevo Costo (" + envio.getCosto() + "): ").trim();
         if (!costoStr.isEmpty()) {
             try {
                 double costo = Double.parseDouble(costoStr);
