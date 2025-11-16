@@ -160,18 +160,13 @@ public class EnvioConsoleController {
         System.out.println("--- Editando Envío: " + envio.getTracking() + " ---");
         System.out.println("(Presione Enter para mantener el valor actual)");
 
-        String tracking = input.prompt("Nuevo Tracking (" + envio.getTracking() + "): ").trim();
-        if (!tracking.isEmpty()) envio.setTracking(tracking);
-
+        actualizarTracking(envio);
         actualizarCostoEnvio(envio,
                 input.prompt("Nuevo Costo (" + envio.getCosto() + "): ").trim());
-
         actualizarFechaDespacho(envio,
                 input.prompt("Nueva Fecha Despacho (" + envio.getFechaDespacho() + "): ").trim());
-
         actualizarFechaEstimada(envio,
                 input.prompt("Nueva Fecha Estimada (" + envio.getFechaEstimada() + "): ").trim());
-
         actualizarEstado(envio);
 
         try {
@@ -180,6 +175,11 @@ public class EnvioConsoleController {
         } catch (Exception e) {
             System.out.println("❌ Error al actualizar envío: " + e.getMessage());
         }
+    }
+
+    private void actualizarTracking(Envio envio) {
+        String tracking = input.prompt("Nuevo Tracking (" + envio.getTracking() + "): ").trim();
+        if (!tracking.isEmpty()) envio.setTracking(tracking);
     }
 
     private void actualizarEstado(Envio envio) {
