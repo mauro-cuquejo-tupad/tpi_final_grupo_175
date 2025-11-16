@@ -32,7 +32,12 @@ public class EnvioConsoleController {
             if (pedido == null) {
                 return;
             }
-            Envio envio = crearEnvioEnMemoria();
+            String tracking = obtenerTrackingValido();
+            if(tracking == null) {
+                return;
+            }
+
+            Envio envio = crearEnvioEnMemoria(tracking);
 
             //transaccional para crear envio y actualizar pedido
             String numeroEnvio = envioService.crearEnvioYActualizarPedido(envio, pedido);
@@ -41,6 +46,24 @@ public class EnvioConsoleController {
         } catch (Exception e) {
             System.out.println("❌ Error al crear envío: " + e.getMessage());
         }
+    }
+
+    private String obtenerTrackingValido() {
+        String tracking;
+        while (true) {
+            tracking = input.prompt("Ingrese el Tracking envío o 'q' para salir: ");
+            if (tracking.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return null;
+            }
+            Envio envio = envioService.buscarPorTracking(tracking);
+            if (envio != null) {
+                System.out.println("❌ Ya existe un envío con ese Tracking. Intente nuevamente.");
+            } else {
+                break;
+            }
+        }
+        return tracking;
     }
 
     private Pedido getPedido() {
@@ -300,19 +323,19 @@ public class EnvioConsoleController {
         }
     }
 
-    private Envio crearEnvioEnMemoria() {
+    private Envio crearEnvioEnMemoria(String tracking) {
         System.out.println("\n... Configurando datos del Envío ...");
         Envio envio = new Envio();
-        envio.setTracking(input.prompt("Número de Tracking: "));
+        envio.setTracking(tracking);
 
         envio.setCosto(input.leerDouble("Costo del envío: "));
 
-        envio.setFechaDespacho(input.leerFecha("Fecha de Despacho (AAAA-MM-DD): "));
-        envio.setFechaEstimada(input.leerFecha("Fecha Estimada de Entrega (AAAA-MM-DD): "));
+        envio.setFechaDespacho(LocalDate.now());
+        envio.setFechaEstimada(envio.getFechaDespacho().plusDays(5));
 
         envio.setEmpresa(elegirEmpresaEnvio());
         envio.setTipo(elegirTipoEnvio());
-        envio.setEstado(elegirEstadoEnvio());
+        envio.setEstado(EstadoEnvio.EN_PREPARACION);
 
         envio.setEliminado(false);
 
