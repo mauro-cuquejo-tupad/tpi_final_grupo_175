@@ -35,8 +35,8 @@ public class PedidoConsoleController {
             pedido.setFecha(LocalDate.now());
             pedido.setEstado(gestorenvios.entities.EstadoPedido.NUEVO);
 
-            pedidoService.crear(pedido);
-            System.out.println("✅ Pedido creado exitosamente.");
+            String numeroPedido = pedidoService.crear(pedido);
+            System.out.println("✅ Pedido Tracking Nro: " + numeroPedido + " creado exitosamente.");
         } catch (Exception e) {
             System.out.println("❌ Error al crear el pedido: " + e.getMessage());
         }

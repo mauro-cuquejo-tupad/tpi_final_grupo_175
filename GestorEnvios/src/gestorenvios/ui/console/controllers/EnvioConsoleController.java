@@ -35,9 +35,9 @@ public class EnvioConsoleController {
             Envio envio = crearEnvioEnMemoria();
 
             //transaccional para crear envio y actualizar pedido
-            envioService.crearEnvioYActualizarPedido(envio, pedido);
+            String numeroEnvio = envioService.crearEnvioYActualizarPedido(envio, pedido);
 
-            System.out.println("✅ Envío creado exitosamente.");
+            System.out.println("✅ Envío Tracking Nro: " + numeroEnvio + " creado exitosamente.");
         } catch (Exception e) {
             System.out.println("❌ Error al crear envío: " + e.getMessage());
         }

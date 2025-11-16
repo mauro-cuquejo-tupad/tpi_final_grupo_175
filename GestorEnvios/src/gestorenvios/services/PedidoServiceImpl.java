@@ -22,12 +22,14 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void crear(Pedido pedido) throws CreacionEntityException {
+    public String crear(Pedido pedido) throws CreacionEntityException {
         try {
             validarPedido(pedido);
-            pedido.setNumero(generarNuevoNumeroPedido());
+            String numeroPedido = generarNuevoNumeroPedido();
+            pedido.setNumero(numeroPedido);
 
             pedidoDAO.insertar(pedido);
+            return numeroPedido;
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el pedido: " + e.getMessage());
         }

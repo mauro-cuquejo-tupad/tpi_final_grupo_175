@@ -27,10 +27,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     }
 
     @Override
-    public void crear(Envio envio) throws CreacionEntityException {
+    public String crear(Envio envio) throws CreacionEntityException {
         try {
             validarEnvio(envio);
             envioDAO.insertar(envio);
+            return envio.getTracking();
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el envío: " + e.getMessage());
         }
@@ -115,7 +116,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     }
 
     @Override
-    public void crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
+    public String crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
         validarEnvio(envio);
         try (Connection conn = DatabaseConnection.getConnection();
              TransactionManager transactionManager = new TransactionManager(conn)) {
@@ -128,6 +129,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
             pedido.setEstado(EstadoPedido.ENVIADO);
             pedidosService.actualizarTx(pedido, conn);
             transactionManager.commit();
+            return envio.getTracking();
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el envío y actualizar el pedido: " + e.getMessage());
         }

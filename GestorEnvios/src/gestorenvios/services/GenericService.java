@@ -8,7 +8,7 @@ import gestorenvios.models.exceptions.EliminacionEntityException;
 import java.util.List;
 
 public interface GenericService<T> {
-    void crear(T entity) throws CreacionEntityException;
+    String crear(T entity) throws CreacionEntityException;
 
     List<T> buscarTodos(Long cantidad, Long pagina) throws ConsultaEntityException;
 
