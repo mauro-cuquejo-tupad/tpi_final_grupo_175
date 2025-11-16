@@ -24,7 +24,7 @@ public class ConsoleInputReader implements InputReader {
     }
 
     @Override
-    public double readDouble(String mensaje) {
+    public double leerDouble(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
@@ -36,7 +36,7 @@ public class ConsoleInputReader implements InputReader {
     }
 
     @Override
-    public Long readLong(String mensaje) {
+    public Long leerLong(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
@@ -48,7 +48,7 @@ public class ConsoleInputReader implements InputReader {
     }
 
     @Override
-    public LocalDate readDate(String mensaje) {
+    public LocalDate leerFecha(String mensaje) {
         while (true) {
             try {
                 System.out.print(mensaje);
@@ -64,7 +64,7 @@ public class ConsoleInputReader implements InputReader {
     }
 
     @Override
-    public String readPedidoNumero(String mensaje) {
+    public String leerNumeroPedido(String mensaje) {
         while (true) {
             System.out.print(mensaje);
             String entrada = scanner.nextLine().trim();
@@ -90,7 +90,7 @@ public class ConsoleInputReader implements InputReader {
                     return opcion;
                 }
                 System.out.println("Opción fuera de rango.");
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 System.out.println("Error: Ingrese un número válido.");
             }
         }

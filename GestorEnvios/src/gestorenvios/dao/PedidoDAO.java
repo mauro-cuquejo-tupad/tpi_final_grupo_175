@@ -89,7 +89,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = 0 AND e.tracking = ?";
 
-    private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) numero AS max_numero FROM Pedido";
+    private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) AS numero FROM Pedido";
 
 
     /**
@@ -101,7 +101,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
     @Override
     public void insertar(Pedido pedido) throws Exception {
-
         // Usamos try-with-resources para la conexión y el statement
         try (Connection conn = DatabaseConnection.getConnection()) {
             insertar(pedido, conn);
@@ -122,7 +121,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
         // Método para recuperar los ID autogenerados
         setGeneratedId(pstmt, pedido);
-
     }
 
     /**

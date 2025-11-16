@@ -1,10 +1,13 @@
 package gestorenvios.services;
 
+import gestorenvios.config.DatabaseConnection;
+import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.EnvioDAO;
 import gestorenvios.entities.Envio;
 import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -61,16 +64,31 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public void crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws Exception {
-        ManejadorTransaccionesImpl transactionManager = new ManejadorTransaccionesImpl();
-        transactionManager.execute(conn -> {
-            //primero creo el envio
-            envioDAO.insertTx(envio, conn);
+        TransactionManager transactionManager = null;
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            transactionManager = new TransactionManager(conn);
+
+            transactionManager.startTransaction();
+            envioDAO.insertar(envio, conn);
             //actualizo el pedido con el envio creado
             pedido.setEnvio(envio);
             //actualizo el estado del pedido
             pedido.setEstado(EstadoPedido.ENVIADO);
             pedidosService.actualizar(pedido, conn);
-            return null;
-        });
+            transactionManager.commit();
+        } catch (Exception e) {
+            System.out.println("Error en la transacción: " + e.getMessage());
+            if(transactionManager != null) {
+                transactionManager.rollback();
+            }
+            throw e;
+        } finally {
+            // Cerrar el TransactionManager y la conexión
+            // Esto se hace en el método close() del TransactionManager
+            if(transactionManager != null) {
+                transactionManager.close();
+            }
+        }
     }
 }

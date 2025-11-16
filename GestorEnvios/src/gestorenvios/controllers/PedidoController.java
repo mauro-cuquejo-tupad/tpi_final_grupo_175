@@ -2,6 +2,7 @@ package gestorenvios.controllers;
 
 import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
+import gestorenvios.models.exceptions.pedidos.ActualizacionPedidoException;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.InputReader;
 import gestorenvios.ui.Paginador;
@@ -25,7 +26,7 @@ public class PedidoController {
         try {
             System.out.println("\n--- CREAR NUEVO PEDIDO ---");
             String cliente = input.prompt("Nombre del Cliente: ");
-            double total = input.readDouble("Total del pedido: ");
+            double total = input.leerDouble("Total del pedido: ");
 
             Pedido pedido = new Pedido();
             pedido.setClienteNombre(cliente);
@@ -48,15 +49,15 @@ public class PedidoController {
 
             Paginador<Pedido> paginador = new Paginador<>(50L, input);
             paginador.paginar(
-                    (pageSize, page) -> {
+                    (cantidad, pagina) -> {
                         try {
-                            return pedidoService.buscarTodos(pageSize, page);
+                            return pedidoService.buscarTodos(cantidad, pagina);
                         } catch (Exception e) {
                             System.out.println("❌ Error al obtener envíos: " + e.getMessage());
                             return List.of();
                         }
                     },
-                    lista -> lista.forEach(PedidoPrinter::printSummary),
+                    lista -> lista.forEach(PedidoPrinter::mostrarResumen),
                     total
             );
         } catch (Exception e) {
@@ -64,16 +65,14 @@ public class PedidoController {
         }
     }
 
-    public Pedido buscarPorNumero() {
+    public void buscarPorNumero() {
         System.out.println("\n--- BUSCAR PEDIDO POR NUMERO ---");
         try {
-            String numero = input.readPedidoNumero("Ingrese Numero de pedido (PED-XXXXXXXX): ");
-            Pedido p = pedidoService.buscarPorNumeroPedido(numero);
-            PedidoPrinter.printSummary(p);
-            return p;
+            String numero = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX): ");
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
+            PedidoPrinter.mostrarResumen(pedido);
         } catch (Exception e) {
             System.out.println("❌ Error al buscar: " + e.getMessage());
-            return null;
         }
     }
 
@@ -82,7 +81,7 @@ public class PedidoController {
         try {
             String tracking = input.prompt("Ingrese código de tracking: ");
             Pedido p = pedidoService.buscarPorNumeroTracking(tracking);
-            PedidoPrinter.printSummary(p);
+            PedidoPrinter.mostrarResumen(p);
             return p;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar: " + e.getMessage());
@@ -93,9 +92,9 @@ public class PedidoController {
     public Pedido buscarPorId() {
         System.out.println("\n--- BUSCAR PEDIDO POR ID ---");
         try {
-            Long id = input.readLong("Ingrese ID de pedido: ");
+            Long id = input.leerLong("Ingrese ID de pedido: ");
             Pedido p = pedidoService.buscarPorId(id);
-            PedidoPrinter.printSummary(p);
+            PedidoPrinter.mostrarResumen(p);
             return p;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar: " + e.getMessage());
@@ -108,57 +107,11 @@ public class PedidoController {
     public void actualizarPedidoPorNumero() {
         System.out.println("\n--- ACTUALIZAR PEDIDO ---");
         try {
-            String numero = input.readPedidoNumero("Ingrese Numero de pedido a modificar (PED-XXXXXXXX): ");
+            String numero = input.leerNumeroPedido("Ingrese Numero de pedido a modificar (PED-XXXXXXXX): ");
 
             // buscamos si existe
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
-            if (pedido == null) {
-                System.out.println("Pedido no encontrado.");
-                return;
-            }
-
-            System.out.println("Editando pedido: " + pedido.getNumero());
-            System.out.println("(Presione Enter para mantener el valor actual)");
-
-            // Lógica para editar solo si el usuario escribe algo
-            System.out.print("Nuevo Cliente (" + pedido.getClienteNombre() + "): ");
-            String nuevoCliente = input.nextLine().trim();
-            if (!nuevoCliente.isEmpty()) {
-                pedido.setClienteNombre(nuevoCliente);
-            }
-
-            // Actualizar TOTAL
-            System.out.print("Nuevo Total (" + pedido.getTotal() + "): ");
-            String totalStr = input.nextLine().trim();
-            if (!totalStr.isEmpty()) {
-                try {
-                    pedido.setTotal(Double.parseDouble(totalStr));
-                } catch (NumberFormatException _) {
-                    System.out.println("⚠ Formato de número incorrecto. Se mantiene el valor anterior.");
-                }
-            }
-
-            // Actualizar FECHA
-            System.out.print("Nueva Fecha (" + pedido.getFecha() + ") [AAAA-MM-DD]: ");
-            String fechaStr = input.nextLine().trim();
-            if (!fechaStr.isEmpty()) {
-                try {
-                    pedido.setFecha(LocalDate.parse(fechaStr));
-                } catch (DateTimeParseException _) {
-                    System.out.println("⚠ Formato de fecha incorrecto. Se mantiene la fecha anterior.");
-                }
-            }
-
-            // Actualizar ESTADO (Enum)
-            System.out.println("Estado actual: " + pedido.getEstado());
-            System.out.print("¿Desea cambiar el estado? (s/n): ");
-            if (input.nextLine().trim().equalsIgnoreCase("s")) {
-                pedido.setEstado(elegirEstadoPedido()); // Reutilizamos método selector
-            }
-
-            // Llamada al Service para guardar cambios
-            pedidoService.actualizar(pedido);
-            System.out.println("✅ Pedido actualizado.");
+            actualizar(pedido);
 
         } catch (Exception e) {
             System.out.println("❌ Error al actualizar: " + e.getMessage());
@@ -168,68 +121,71 @@ public class PedidoController {
     public void actualizarPedidoPorId() {
         System.out.println("\n--- ACTUALIZAR PEDIDO ---");
         try {
-            Long id = input.readLong("Ingrese Id de pedido a modificar: ");
+            Long id = input.leerLong("Ingrese Id de pedido a modificar: ");
 
             // buscamos si existe
             Pedido pedido = pedidoService.buscarPorId(id);
-            if (pedido == null) {
-                System.out.println("Pedido no encontrado.");
-                return;
-            }
-
-            System.out.println("Editando pedido: " + pedido.getNumero());
-            System.out.println("(Presione Enter para mantener el valor actual)");
-
-            // Lógica para editar solo si el usuario escribe algo
-            System.out.print("Nuevo Cliente (" + pedido.getClienteNombre() + "): ");
-            String nuevoCliente = input.nextLine().trim();
-            if (!nuevoCliente.isEmpty()) {
-                pedido.setClienteNombre(nuevoCliente);
-            }
-
-            // Actualizar TOTAL
-            System.out.print("Nuevo Total (" + pedido.getTotal() + "): ");
-            String totalStr = input.nextLine().trim();
-            if (!totalStr.isEmpty()) {
-                try {
-                    pedido.setTotal(Double.parseDouble(totalStr));
-                } catch (NumberFormatException _) {
-                    System.out.println("⚠ Formato de número incorrecto. Se mantiene el valor anterior.");
-                }
-            }
-
-            // Actualizar FECHA
-            System.out.print("Nueva Fecha (" + pedido.getFecha() + ") [AAAA-MM-DD]: ");
-            String fechaStr = input.nextLine().trim();
-            if (!fechaStr.isEmpty()) {
-                try {
-                    pedido.setFecha(LocalDate.parse(fechaStr));
-                } catch (DateTimeParseException _) {
-                    System.out.println("⚠ Formato de fecha incorrecto. Se mantiene la fecha anterior.");
-                }
-            }
-
-            // Actualizar ESTADO (Enum)
-            System.out.println("Estado actual: " + pedido.getEstado());
-            System.out.print("¿Desea cambiar el estado? (s/n): ");
-            if (input.nextLine().trim().equalsIgnoreCase("s")) {
-                pedido.setEstado(elegirEstadoPedido()); // Reutilizamos método selector
-            }
-
-            // Llamada al Service para guardar cambios
-            pedidoService.actualizar(pedido);
-            System.out.println("✅ Pedido actualizado.");
+            actualizar(pedido);
 
         } catch (Exception e) {
             System.out.println("❌ Error al actualizar: " + e.getMessage());
         }
     }
 
+    private void actualizar(Pedido pedido) throws Exception {
+        if (pedido == null) {
+            throw new ActualizacionPedidoException("Pedido no encontrado.");
+        }
+
+        System.out.println("Editando pedido: " + pedido.getNumero());
+        System.out.println("(Presione Enter para mantener el valor actual)");
+
+        // Lógica para editar solo si el usuario escribe algo
+        System.out.print("Nuevo Cliente (" + pedido.getClienteNombre() + "): ");
+        String nuevoCliente = input.nextLine().trim();
+        if (!nuevoCliente.isEmpty()) {
+            pedido.setClienteNombre(nuevoCliente);
+        }
+
+        // Actualizar TOTAL
+        System.out.print("Nuevo Total (" + pedido.getTotal() + "): ");
+        String totalStr = input.nextLine().trim();
+        if (!totalStr.isEmpty()) {
+            try {
+                pedido.setTotal(Double.parseDouble(totalStr));
+            } catch (NumberFormatException _) {
+                System.out.println("⚠ Formato de número incorrecto. Se mantiene el valor anterior.");
+            }
+        }
+
+        // Actualizar FECHA
+        System.out.print("Nueva Fecha (" + pedido.getFecha() + ") [AAAA-MM-DD]: ");
+        String fechaStr = input.nextLine().trim();
+        if (!fechaStr.isEmpty()) {
+            try {
+                pedido.setFecha(LocalDate.parse(fechaStr));
+            } catch (DateTimeParseException _) {
+                System.out.println("⚠ Formato de fecha incorrecto. Se mantiene la fecha anterior.");
+            }
+        }
+
+        // Actualizar ESTADO (Enum)
+        System.out.println("Estado actual: " + pedido.getEstado());
+        System.out.print("¿Desea cambiar el estado? (s/n): ");
+        if (input.nextLine().trim().equalsIgnoreCase("s")) {
+            pedido.setEstado(elegirEstadoPedido()); // Reutilizamos método selector
+        }
+
+        // Llamada al Service para guardar cambios
+        pedidoService.actualizar(pedido);
+        System.out.println("✅ Pedido actualizado.");
+    }
+
     //ELIMINAR PEDIDOS
     public void eliminarPedidoPorNumero() {
         System.out.println("\n--- ELIMINAR PEDIDO ---");
         try {
-            String numero = input.readPedidoNumero("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX): ");
+            String numero = input.leerNumeroPedido("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX): ");
 
             // Llamada al Service (Soft Delete)
             pedidoService.eliminarPorNumero(numero);
@@ -244,7 +200,7 @@ public class PedidoController {
     public void eliminarEnvioDePedido() {
         System.out.println("\n--- ELIMINAR ENVIO DE PEDIDO ---");
         try {
-            String numero = input.readPedidoNumero("Ingrese Numero del pedido para eliminar su envío (PED-XXXXXXXX): ");
+            String numero = input.leerNumeroPedido("Ingrese Numero del pedido para eliminar su envío (PED-XXXXXXXX): ");
 
             // Llamada al Service (Soft Delete)
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
@@ -264,7 +220,7 @@ public class PedidoController {
     public void eliminarPedidoPorId() {
         System.out.println("\n--- ELIMINAR PEDIDO ---");
         try {
-            Long id = input.readLong("Ingrese ID del pedido a eliminar: ");
+            Long id = input.leerLong("Ingrese ID del pedido a eliminar: ");
 
             // Llamada al Service (Soft Delete)
             pedidoService.eliminar(id);

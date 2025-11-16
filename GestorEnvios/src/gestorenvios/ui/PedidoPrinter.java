@@ -4,7 +4,7 @@ package gestorenvios.ui;
 import gestorenvios.entities.Pedido;
 
 public class PedidoPrinter {
-    public static void printSummary(Pedido p) {
+    public static void mostrarResumen(Pedido p) {
         if (p == null) {
             System.out.println("❌ No se encontró el pedido.");
             return;

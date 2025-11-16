@@ -1,7 +1,11 @@
 package gestorenvios.services;
 
 import com.mysql.cj.util.StringUtils;
+import gestorenvios.config.DatabaseConnection;
+import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.PedidoDAO;
+import gestorenvios.entities.Envio;
+import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 
 import java.sql.Connection;
@@ -92,10 +96,27 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public void eliminarEnvioDePedido(Long idPedido) throws Exception {
-        ManejadorTransaccionesImpl transactionManager = new ManejadorTransaccionesImpl();
-        transactionManager.execute(conn -> {
+        TransactionManager transactionManager = null;
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            transactionManager = new TransactionManager(conn);
+
+            transactionManager.startTransaction();
             pedidoDAO.desvincularEnvioTx(idPedido, conn);
-            return null;
-        });
+            transactionManager.commit();
+        } catch (Exception e) {
+            System.out.println("Error en la transacción: " + e.getMessage());
+            if(transactionManager != null) {
+                transactionManager.rollback();
+            }
+            throw e;
+        } finally {
+            // Cerrar el TransactionManager y la conexión
+            // Esto se hace en el método close() del TransactionManager
+            if(transactionManager != null) {
+                transactionManager.close();
+            }
+        }
+
     }
 }

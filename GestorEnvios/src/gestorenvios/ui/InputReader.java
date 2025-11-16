@@ -7,13 +7,13 @@ public interface InputReader {
 
     String prompt(String mensaje);
 
-    double readDouble(String mensaje);
+    double leerDouble(String mensaje);
 
-    Long readLong(String mensaje);
+    Long leerLong(String mensaje);
 
-    LocalDate readDate(String mensaje);
+    LocalDate leerFecha(String mensaje);
 
-    String readPedidoNumero(String mensaje);
+    String leerNumeroPedido(String mensaje);
 
     void mostrarOpcionesEnum(Object[] valores);
 
