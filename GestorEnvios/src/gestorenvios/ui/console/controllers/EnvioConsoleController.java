@@ -88,15 +88,13 @@ public class EnvioConsoleController {
         }
     }
 
-    public Envio buscarPorTracking() {
+    public void buscarPorTracking() {
         System.out.println("\n--- BUSCAR ENVIO POR TRACKING ---");
         try {
             Envio envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking de pedido: "));
             EnvioPrinter.mostrarResumen(envio);
-            return envio;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
-            return null;
         }
     }
 
