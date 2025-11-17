@@ -43,6 +43,8 @@ El proyecto aplica patrones de diseño y buenas prácticas de programación orie
 
 ## 🏗️ Arquitectura del Proyecto
 
+> 📊 **[Ver Diagrama de Clases UML Completo](docs/DIAGRAMA_CLASES.md)**
+
 ### Estructura de Capas
 
 ```
@@ -369,6 +371,30 @@ Este proyecto está bajo la licencia especificada en el archivo `LICENSE`.
 ## 🤝 Contribuciones
 
 Este es un proyecto académico. Para sugerencias o mejoras, contactar al equipo de desarrollo.
+
+---
+
+## 📚 Documentación
+
+> 📊 **[Resumen Ejecutivo del Proyecto](docs/RESUMEN_EJECUTIVO.md)** - Vista general completa para evaluación
+
+### Diagramas y Arquitectura
+- **[📊 Diagrama de Clases UML Completo](docs/DIAGRAMA_CLASES.md)** - Diagrama detallado con Mermaid
+  - Incluye todas las clases, interfaces y relaciones
+  - Visualización interactiva en GitHub
+  
+- **[🎨 Diagrama PlantUML](docs/diagrama_clases.puml)** - Archivo fuente para generar imágenes
+  - Formato PNG, SVG o PDF
+  - Compatible con múltiples herramientas
+  
+- **[📋 Vista Rápida ASCII](docs/DIAGRAMA_ASCII.txt)** - Diagrama en formato texto
+  - Visualización inmediata en consola
+  - No requiere herramientas adicionales
+
+### Guías
+- **[📖 Cómo Visualizar Diagramas](docs/README.md)** - Instrucciones para ver y generar diagramas
+- **Javadoc** - Documentación embebida en código fuente
+- **Scripts SQL** - `GestorEnvios/src/resources/db/example.sql`
 
 ---
 

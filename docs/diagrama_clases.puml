@@ -1,0 +1,478 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "Entities" #LightCyan {
+
+    class Pedido {
+        -Long id
+        -Boolean eliminado
+        -String numero
+        -LocalDate fecha
+        -String clienteNombre
+        -Double total
+        -EstadoPedido estado
+        -Envio envio
+        --
+        +getId(): Long
+        +setId(Long): void
+        +getNumero(): String
+        +getFecha(): LocalDate
+        +getEstado(): EstadoPedido
+        +getEnvio(): Envio
+        .. otros getters/setters ..
+    }
+
+    class Envio {
+        -Long id
+        -Boolean eliminado
+        -String tracking
+        -EmpresaEnvio empresa
+        -TipoEnvio tipo
+        -double costo
+        -LocalDate fechaDespacho
+        -LocalDate fechaEstimada
+        -EstadoEnvio estado
+        --
+        +getId(): Long
+        +getTracking(): String
+        +getEmpresa(): EmpresaEnvio
+        +getTipo(): TipoEnvio
+        +getEstado(): EstadoEnvio
+        .. otros getters/setters ..
+    }
+
+    enum EstadoPedido {
+        NUEVO
+        FACTURADO
+        ENVIADO
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EstadoPedido
+    }
+
+    enum EstadoEnvio {
+        EN_PREPARACION
+        EN_TRANSITO
+        ENTREGADO
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EstadoEnvio
+    }
+
+    enum EmpresaEnvio {
+        CORREO_ARGENTINO
+        ANDREANI
+        OCA
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EmpresaEnvio
+    }
+
+    enum TipoEnvio {
+        ESTANDAR
+        EXPRES
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): TipoEnvio
+    }
+}
+
+package "DAO Layer" #LightGreen {
+
+    interface GenericDAO<T> {
+        +insertar(T): void
+        +insertarTx(T, Connection): void
+        +actualizar(T): void
+        +actualizarTx(T, Connection): void
+        +eliminarLogico(Long): void
+        +eliminarLogicoTx(Long, Connection): void
+        +buscarPorId(Long): T
+        +buscarTodos(Long, Long): List<T>
+    }
+
+    class PedidoDAO {
+        -{static} QUERY_BASE: String
+        -{static} INSERT_SQL: String
+        -{static} UPDATE_SQL: String
+        -{static} DELETE_SQL: String
+        --
+        +insertar(Pedido): void
+        +insertarTx(Pedido, Connection): void
+        +actualizar(Pedido): void
+        +buscarPorId(Long): Pedido
+        +buscarTodos(Long, Long): List<Pedido>
+        +buscarPorNumero(String): Pedido
+        +buscarPorTracking(String): Pedido
+        +buscarPorClienteNombre(String, Long, Long): List<Pedido>
+        +buscarUltimoNumeroPedido(): String
+        +obtenerCantidadTotalDePedidos(): Long
+        --
+        -mapResultSetToPedido(ResultSet): Pedido
+        -setPedidoParameters(PreparedStatement, Pedido): void
+    }
+
+    class EnvioDAO {
+        -{static} QUERY_BASE: String
+        -{static} INSERT_SQL: String
+        -{static} UPDATE_SQL: String
+        -{static} DELETE_SQL: String
+        --
+        +insertar(Envio): void
+        +insertarTx(Envio, Connection): void
+        +actualizar(Envio): void
+        +buscarPorId(Long): Envio
+        +buscarTodos(Long, Long): List<Envio>
+        +buscarPorTracking(String): Envio
+        +buscarPorNumeroPedido(String): Envio
+        +obtenerCantidadTotalDeEnvios(): Long
+        --
+        -mapResultSetToEnvio(ResultSet): Envio
+        -setEnvioParameters(PreparedStatement, Envio): void
+    }
+}
+
+package "Service Layer" #LightYellow {
+
+    interface GenericService<T> {
+        +crear(T): String
+        +buscarTodos(Long, Long): List<T>
+        +buscarPorId(Long): T
+        +actualizar(T): void
+        +eliminar(T): void
+    }
+
+    interface GenericPedidosService<T> {
+        +actualizarTx(T, Connection): void
+        +buscarPorNumeroPedido(String): T
+        +buscarPorNumeroTracking(String): T
+        +buscarPorCliente(String, Long, Long): List<T>
+        +obtenerCantidadTotalDePedidos(): Long
+        +obtenerCantidadTotalDePedidosPorCliente(String): Long
+    }
+
+    interface GenericEnviosService<T, U> {
+        +buscarPorTracking(String): T
+        +buscarPorNumeroPedido(String): T
+        +obtenerCantidadTotalDeEnvios(): Long
+        +crearEnvioYActualizarPedido(T, U): String
+        +actualizarEstado(T, U): void
+    }
+
+    class PedidoServiceImpl {
+        -PedidoDAO pedidoDAO
+        --
+        +PedidoServiceImpl(PedidoDAO)
+        +crear(Pedido): String
+        +buscarTodos(Long, Long): List<Pedido>
+        +buscarPorId(Long): Pedido
+        +buscarPorNumeroPedido(String): Pedido
+        +buscarPorNumeroTracking(String): Pedido
+        +buscarPorCliente(String, Long, Long): List<Pedido>
+        +actualizar(Pedido): void
+        +actualizarTx(Pedido, Connection): void
+        +eliminar(Pedido): void
+        --
+        -generarNuevoNumeroPedido(): String
+        -validarPedido(Pedido): void
+    }
+
+    class EnvioServiceImpl {
+        -EnvioDAO envioDAO
+        -GenericPedidosService<Pedido> pedidosService
+        --
+        +EnvioServiceImpl(EnvioDAO, GenericPedidosService)
+        +crear(Envio): String
+        +buscarTodos(Long, Long): List<Envio>
+        +buscarPorId(Long): Envio
+        +buscarPorTracking(String): Envio
+        +buscarPorNumeroPedido(String): Envio
+        +actualizar(Envio): void
+        +eliminar(Envio): void
+        +crearEnvioYActualizarPedido(Envio, Pedido): String
+        +actualizarEstado(Envio, Pedido): void
+        --
+        -validarEnvio(Envio): void
+        -generarNumeroTracking(): String
+    }
+}
+
+package "Configuration" #LightSalmon {
+
+    class DatabaseConnection {
+        -{static} URL: String
+        -{static} USER: String
+        -{static} PASSWORD: String
+        -{static} DRIVER: String
+        --
+        +{static} getConnection(): Connection
+        -{static} cargarConfiguracion(): void
+    }
+
+    class TransactionManager {
+        -Connection connection
+        --
+        +TransactionManager(Connection)
+        +startTransaction(): void
+        +commit(): void
+        +rollback(): void
+        +close(): void
+    }
+
+    class ApplicationConfig {
+        -{static} Properties properties
+        --
+        +{static} getProperty(String): String
+        -{static} cargarPropiedades(): void
+    }
+}
+
+package "UI Layer - Controllers" #LightBlue {
+
+    class AppMenu {
+        -InputReader input
+        -MenuHandler menuHandler
+        -boolean running
+        -Map<Integer, Runnable> menuActions
+        --
+        +AppMenu()
+        +run(): void
+        -cargarAccionesMenu(): Map
+        -processOption(int): void
+        -createPedidoService(): GenericPedidosService
+        -crearEnvioService(GenericPedidosService): GenericEnviosService
+    }
+
+    class MenuHandler {
+        -GenericPedidosService<Pedido> pedidoService
+        -GenericEnviosService<Envio, Pedido> envioService
+        -InputReader input
+        --
+        +MenuHandler(GenericPedidosService, GenericEnviosService, InputReader)
+        +crearPedido(): void
+        +listarPedidos(): void
+        +buscarPedidoPorNumero(): void
+        +actualizarPedidoPorNumero(): void
+        +eliminarPedidoPorNumero(): void
+        +crearEnvio(): void
+        +listarEnvios(): void
+        +buscarEnvioPorTracking(): void
+        .. otros métodos de menú ..
+    }
+
+    class PedidoConsoleController {
+        -GenericPedidosService<Pedido> pedidoService
+        -InputReader input
+        --
+        +PedidoConsoleController(GenericPedidosService, InputReader)
+        +crearPedido(): void
+        +buscarPorNumero(): Pedido
+        +buscarPorId(): Pedido
+        +actualizarPedido(Pedido): void
+        +eliminarPedido(Pedido): void
+    }
+
+    class EnvioConsoleController {
+        -GenericEnviosService<Envio, Pedido> envioService
+        -GenericPedidosService<Pedido> pedidoService
+        -InputReader input
+        --
+        +EnvioConsoleController(GenericEnviosService, GenericPedidosService, InputReader)
+        +crearEnvio(): void
+        +buscarPorTracking(): Envio
+        +buscarPorNumeroPedido(): Envio
+        +actualizarEnvio(Envio): void
+        +eliminarEnvio(Envio): void
+    }
+}
+
+package "UI Layer - Input/Output" #Lavender {
+
+    interface InputReader {
+        +nextLine(): String
+        +nextInt(): int
+        +nextDouble(): double
+        +nextLong(): long
+    }
+
+    class ConsoleInputReader {
+        -Scanner scanner
+        --
+        +ConsoleInputReader(Scanner)
+        +nextLine(): String
+        +nextInt(): int
+        +nextDouble(): double
+        +nextLong(): long
+    }
+
+    class MenuDisplay {
+        +{static} mostrarMenuPrincipal(): void
+        +{static} mostrarEstadosPedido(): void
+        +{static} mostrarEstadosEnvio(): void
+        +{static} mostrarEmpresasEnvio(): void
+        +{static} mostrarTiposEnvio(): void
+    }
+
+    class PedidoPrinter {
+        +{static} imprimirPedido(Pedido): void
+        +{static} imprimirListaPedidos(List<Pedido>): void
+    }
+
+    class EnvioPrinter {
+        +{static} imprimirEnvio(Envio): void
+        +{static} imprimirListaEnvios(List<Envio>): void
+    }
+
+    class Paginador<T> {
+        -InputReader input
+        --
+        +Paginador(InputReader)
+        +paginar(BiFunction, Consumer, Long, int): void
+    }
+}
+
+package "Exceptions" #MistyRose {
+
+    class CreacionEntityException {
+        +CreacionEntityException(String)
+    }
+
+    class ConsultaEntityException {
+        +ConsultaEntityException(String)
+    }
+
+    class ActualizacionEntityException {
+        +ActualizacionEntityException(String)
+    }
+
+    class EliminacionEntityException {
+        +EliminacionEntityException(String)
+    }
+}
+
+' ========================================
+' RELACIONES - ENTIDADES
+' ========================================
+
+Pedido "1" o-- "0..1" Envio : tiene >
+Pedido --> EstadoPedido : usa
+Envio --> EstadoEnvio : usa
+Envio --> EmpresaEnvio : usa
+Envio --> TipoEnvio : usa
+
+' ========================================
+' RELACIONES - DAO
+' ========================================
+
+GenericDAO <|.. PedidoDAO : implements
+GenericDAO <|.. EnvioDAO : implements
+PedidoDAO ..> Pedido : <<maneja>>
+EnvioDAO ..> Envio : <<maneja>>
+PedidoDAO --> DatabaseConnection : <<usa>>
+EnvioDAO --> DatabaseConnection : <<usa>>
+
+' ========================================
+' RELACIONES - SERVICIOS
+' ========================================
+
+GenericService <|-- GenericPedidosService : extends
+GenericService <|-- GenericEnviosService : extends
+GenericPedidosService <|.. PedidoServiceImpl : implements
+GenericEnviosService <|.. EnvioServiceImpl : implements
+
+PedidoServiceImpl --> PedidoDAO : usa
+EnvioServiceImpl --> EnvioDAO : usa
+EnvioServiceImpl --> GenericPedidosService : usa
+
+PedidoServiceImpl ..> TransactionManager : <<usa>>
+EnvioServiceImpl ..> TransactionManager : <<usa>>
+
+' ========================================
+' RELACIONES - UI
+' ========================================
+
+AppMenu --> MenuHandler : usa
+AppMenu --> InputReader : usa
+AppMenu --> MenuDisplay : usa
+AppMenu ..> GenericPedidosService : <<crea>>
+AppMenu ..> GenericEnviosService : <<crea>>
+
+MenuHandler --> PedidoConsoleController : delega
+MenuHandler --> EnvioConsoleController : delega
+MenuHandler --> InputReader : usa
+
+PedidoConsoleController --> GenericPedidosService : usa
+PedidoConsoleController --> InputReader : usa
+PedidoConsoleController ..> PedidoPrinter : <<usa>>
+PedidoConsoleController ..> Paginador : <<usa>>
+
+EnvioConsoleController --> GenericEnviosService : usa
+EnvioConsoleController --> GenericPedidosService : usa
+EnvioConsoleController --> InputReader : usa
+EnvioConsoleController ..> EnvioPrinter : <<usa>>
+EnvioConsoleController ..> Paginador : <<usa>>
+
+InputReader <|.. ConsoleInputReader : implements
+
+' ========================================
+' RELACIONES - CONFIGURACIÓN
+' ========================================
+
+DatabaseConnection --> ApplicationConfig : usa
+TransactionManager --> DatabaseConnection : usa
+
+' ========================================
+' RELACIONES - EXCEPCIONES
+' ========================================
+
+Exception <|-- CreacionEntityException
+Exception <|-- ConsultaEntityException
+Exception <|-- ActualizacionEntityException
+Exception <|-- EliminacionEntityException
+
+PedidoServiceImpl ..> CreacionEntityException : <<lanza>>
+PedidoServiceImpl ..> ConsultaEntityException : <<lanza>>
+PedidoServiceImpl ..> ActualizacionEntityException : <<lanza>>
+PedidoServiceImpl ..> EliminacionEntityException : <<lanza>>
+
+EnvioServiceImpl ..> CreacionEntityException : <<lanza>>
+EnvioServiceImpl ..> ConsultaEntityException : <<lanza>>
+EnvioServiceImpl ..> ActualizacionEntityException : <<lanza>>
+EnvioServiceImpl ..> EliminacionEntityException : <<lanza>>
+
+note right of Pedido
+  Relación 1:1 con Envío
+  Baja lógica (campo eliminado)
+  Número autogenerado: PED-00000001
+end note
+
+note right of EnvioServiceImpl
+  Gestiona transacciones complejas:
+  - crearEnvioYActualizarPedido()
+  - Actualización de estados
+end note
+
+note bottom of DatabaseConnection
+  Singleton para conexiones
+  Carga configuración desde
+  application.properties
+end note
+
+@enduml
+
