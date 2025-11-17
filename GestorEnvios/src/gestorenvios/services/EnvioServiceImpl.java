@@ -28,12 +28,24 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public String crear(Envio envio) throws CreacionEntityException {
-        try {
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
             validarEnvio(envio);
-            envioDAO.insertar(envio);
-            return envio.getTracking();
+            return crearTx(envio, transactionManager, conn);
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el envío: " + e.getMessage());
+        }
+    }
+
+    private String crearTx(Envio envio, TransactionManager transactionManager, Connection conn) {
+        try {
+            transactionManager.startTransaction();
+            envioDAO.insertarTx(envio, conn);
+            transactionManager.commit();
+            return envio.getTracking();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new CreacionEntityException(e.getMessage());
         }
     }
 
@@ -99,10 +111,24 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public void actualizar(Envio envio) throws ActualizacionEntityException {
-        try {
-            envioDAO.actualizar(envio);
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
+            actualizarTx(envio, transactionManager, conn);
         } catch (Exception e) {
             throw new ActualizacionEntityException("Error al actualizar el envío: " + e.getMessage());
+        }
+    }
+
+    private void actualizarTx(Envio envio,
+                              TransactionManager transactionManager,
+                              Connection conn) {
+        try {
+            transactionManager.startTransaction();
+            envioDAO.actualizarTx(envio, conn);
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new ActualizacionEntityException(e.getMessage());
         }
     }
 
@@ -110,7 +136,14 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     public void eliminar(Envio envio) throws EliminacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
              TransactionManager transactionManager = new TransactionManager(conn)) {
+            eliminarTx(envio, transactionManager, conn);
+        } catch (Exception e) {
+            throw new EliminacionEntityException("Error al eliminar envío: " + e.getMessage());
+        }
+    }
 
+    private void eliminarTx(Envio envio, TransactionManager transactionManager, Connection conn) {
+        try {
             transactionManager.startTransaction();
             envioDAO.eliminarLogicoTx(envio.getId(), conn);
             Pedido pedido = pedidosService.buscarPorNumeroTracking(envio.getTracking());
@@ -118,32 +151,37 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
             pedidosService.actualizarTx(pedido, conn);
             transactionManager.commit();
         } catch (Exception e) {
-            throw new CreacionEntityException("Error al eliminar envío: " + e.getMessage());
+            transactionManager.rollback();
+            throw new EliminacionEntityException(e.getMessage());
         }
     }
 
     @Override
     public String crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
         validarEnvio(envio);
-
         try (Connection conn = DatabaseConnection.getConnection();
              TransactionManager transactionManager = new TransactionManager(conn)) {
-
-            try {
-                transactionManager.startTransaction();
-                envioDAO.insertarTx(envio, conn);
-                pedido.setEnvio(envio);
-                pedido.setEstado(EstadoPedido.FACTURADO);
-                pedidosService.actualizarTx(pedido, conn);
-                transactionManager.commit();
-                return envio.getTracking();
-            } catch (Exception e) {
-                System.out.println("Error en la transacción. Iniciando rollback...");
-                transactionManager.rollback();
-                throw new CreacionEntityException("Error al crear el envío y actualizar el pedido: " + e.getMessage());
-            }
+            return crearEnvioYActualizarPedidoTx(envio, pedido, transactionManager, conn);
         } catch (Exception e) {
-            throw new CreacionEntityException("Error en conexión / desconexión de base de datos: " + e.getMessage());
+            throw new CreacionEntityException("Error al crear el envío y actualizar el pedido: " + e.getMessage());
+        }
+    }
+
+    private String crearEnvioYActualizarPedidoTx(Envio envio,
+                                                 Pedido pedido,
+                                                 TransactionManager transactionManager,
+                                                 Connection conn) {
+        try {
+            transactionManager.startTransaction();
+            envioDAO.insertarTx(envio, conn);
+            pedido.setEnvio(envio);
+            pedido.setEstado(EstadoPedido.FACTURADO);
+            pedidosService.actualizarTx(pedido, conn);
+            transactionManager.commit();
+            return envio.getTracking();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new CreacionEntityException(e.getMessage());
         }
     }
 
@@ -152,15 +190,23 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         validarEnvio(envio);
         try (Connection conn = DatabaseConnection.getConnection();
              TransactionManager transactionManager = new TransactionManager(conn)) {
+            actualizarEstadoTx(envio, pedido, transactionManager, conn);
+        } catch (Exception e) {
+            throw new ActualizacionEntityException("Error al actualizar estado del envío: " + e.getMessage());
+        }
 
+    }
+
+    private void actualizarEstadoTx(Envio envio, Pedido pedido, TransactionManager transactionManager, Connection conn) {
+        try {
             transactionManager.startTransaction();
             envioDAO.actualizarTx(envio, conn);
             pedido.setEstado(EstadoPedido.ENVIADO);
             pedidosService.actualizarTx(pedido, conn);
             transactionManager.commit();
         } catch (Exception e) {
-            throw new CreacionEntityException("Error al actualizar estado del envío: " + e.getMessage());
+            transactionManager.rollback();
+            throw new ActualizacionEntityException(e.getMessage());
         }
-
     }
 }

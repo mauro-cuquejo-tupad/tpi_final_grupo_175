@@ -1,6 +1,8 @@
 package gestorenvios.services;
 
 import com.mysql.cj.util.StringUtils;
+import gestorenvios.config.DatabaseConnection;
+import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.PedidoDAO;
 import gestorenvios.entities.Pedido;
 import gestorenvios.models.exceptions.ActualizacionEntityException;
@@ -21,20 +23,34 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public String crear(Pedido pedido) throws CreacionEntityException {
-        try {
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
             validarPedido(pedido);
-            String numeroPedido = generarNuevoNumeroPedido();
-            pedido.setNumero(numeroPedido);
-
-            pedidoDAO.insertar(pedido);
-            return numeroPedido;
+            return crearTx(pedido, transactionManager, conn);
         } catch (Exception e) {
             throw new CreacionEntityException("Error al crear el pedido: " + e.getMessage());
         }
     }
 
-    private String generarNuevoNumeroPedido() throws SQLException {
-        String ultimoPedido = pedidoDAO.buscarUltimoNumeroPedido();
+    private String crearTx(Pedido pedido,
+                           TransactionManager transactionManager,
+                           Connection conn) {
+        try {
+            transactionManager.startTransaction();
+            String numeroPedido = generarNuevoNumeroPedidoTx(conn);
+            pedido.setNumero(numeroPedido);
+            pedidoDAO.insertarTx(pedido, conn);
+            transactionManager.commit();
+            return numeroPedido;
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new CreacionEntityException(e.getMessage());
+        }
+    }
+
+
+    private String generarNuevoNumeroPedidoTx(Connection conn) throws SQLException {
+        String ultimoPedido = pedidoDAO.buscarUltimoNumeroPedidoTx(conn);
 
         if (ultimoPedido == null || ultimoPedido.isEmpty()) {
             throw new SQLException("No se pudo obtener el último número de pedido.");

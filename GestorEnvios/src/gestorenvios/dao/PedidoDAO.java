@@ -499,12 +499,10 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         return pedido;
     }
 
-    public String buscarUltimoNumeroPedido() throws SQLException {
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SEARCH_MAX_NUMERO_PEDIDO)) {
+    public String buscarUltimoNumeroPedidoTx(Connection conn) throws SQLException {
+        try (PreparedStatement pstmt = conn.prepareStatement(SEARCH_MAX_NUMERO_PEDIDO)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-
                     return rs.getString("numero");
                 }
             }
