@@ -61,7 +61,6 @@ public class EnvioDAO implements GenericDAO<Envio> {
     private static final String SELECT_BY_NUMERO_SQL = QUERY_BASE
             + " LEFT JOIN Pedido p  ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE"
-            + " AND e.eliminado = FALSE"
             + " AND p.numero = ?";
 
     /**

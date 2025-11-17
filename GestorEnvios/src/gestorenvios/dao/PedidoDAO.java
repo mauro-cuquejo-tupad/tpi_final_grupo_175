@@ -13,7 +13,7 @@ import java.util.List;
 public class PedidoDAO implements GenericDAO<Pedido> {
     private static final String CAMPOS_PEDIDO = " p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio,"
             + " e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + " e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado e.eliminado AS envio_eliminado ";
+            + " e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado, e.eliminado AS envio_eliminado ";
 
     private static final String QUERY_BASE = "SELECT" + CAMPOS_PEDIDO + " FROM Pedido p";
 
