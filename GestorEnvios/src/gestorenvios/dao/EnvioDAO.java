@@ -57,11 +57,15 @@ public class EnvioDAO implements GenericDAO<Envio> {
     private static final String SELECT_BY_TRACKING_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE AND e.tracking = ?";
 
+    private static final String SEARCH_MAX_TRACKING = "SELECT MAX(tracking) AS tracking FROM Envio WHERE tracking like 'TRK-%'";
+
     /** Query para buscar un envío por número de pedido asociado. Incluye JOIN con tabla Pedido. */
     private static final String SELECT_BY_NUMERO_SQL = QUERY_BASE
             + " LEFT JOIN Pedido p  ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE"
             + " AND p.numero = ?";
+
+    private static final String ENVIO_TRACKING = "tracking";
 
     /**
      * Inserta un envío dentro de una transacción externa.
@@ -247,6 +251,24 @@ public class EnvioDAO implements GenericDAO<Envio> {
             throw new SQLException("Error al listar envíos: " + e.getMessage(), e);
         }
         return envios;
+    }
+
+    /**
+     * Obtiene el último tracking de envio insertado en una transacción.
+     *
+     * @param conn Conexión transaccional
+     * @return Último número de pedido
+     * @throws SQLException Si hay error de BD
+     */
+    public String buscarUltimoNumeroTrackingTx(Connection conn) throws SQLException {
+        try (PreparedStatement pstmt = conn.prepareStatement(SEARCH_MAX_TRACKING)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString(ENVIO_TRACKING);
+                }
+            }
+        }
+        return null;
     }
 
     /**

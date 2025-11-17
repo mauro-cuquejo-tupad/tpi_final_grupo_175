@@ -1,6 +1,5 @@
 package gestorenvios.services;
 
-import com.mysql.cj.util.StringUtils;
 import gestorenvios.config.DatabaseConnection;
 import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.EnvioDAO;
@@ -40,6 +39,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     private String crearTx(Envio envio, TransactionManager transactionManager, Connection conn) {
         try {
             transactionManager.startTransaction();
+            envio.setTracking(generarNuevoNumeroTrackingTx(conn));
             envioDAO.insertarTx(envio, conn);
             transactionManager.commit();
             return envio.getTracking();
@@ -49,10 +49,23 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
-    private void validarEnvio(Envio envio) {
-        if (StringUtils.isNullOrEmpty(envio.getTracking())) {
-            throw new IllegalArgumentException("El numero de tracking no puede estar vacío.");
+    private String generarNuevoNumeroTrackingTx(Connection conn) {
+        try {
+            String ultimoTracking = envioDAO.buscarUltimoNumeroTrackingTx(conn);
+
+            if (ultimoTracking == null || ultimoTracking.isEmpty()) {
+                return "TRK-00000001";
+            }
+            String[] partes = ultimoTracking.split("-");
+            int numero = Integer.parseInt(partes[1]);
+            numero++;
+            return String.format("TRK-%08d", numero);
+        } catch (SQLException e) {
+            throw new CreacionEntityException("No se pudo generar un nuevo número de tracking: " + e.getMessage());
         }
+    }
+
+    private void validarEnvio(Envio envio) {
         if (envio.getCosto() < 0) {
             throw new IllegalArgumentException("El total del pedido no puede negativo.");
         }
@@ -175,6 +188,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
                                                  Connection conn) {
         try {
             transactionManager.startTransaction();
+            envio.setTracking(generarNuevoNumeroTrackingTx(conn));
             envioDAO.insertarTx(envio, conn);
             pedido.setEnvio(envio);
             pedido.setEstado(EstadoPedido.FACTURADO);

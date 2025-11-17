@@ -12,6 +12,8 @@ import java.util.List;
 
 public class EnvioConsoleController {
 
+    public static final String OPERACION_CANCELADA_POR_EL_USUARIO = "❌ Operación cancelada por el usuario.";
+    public static final String ENVIO_ACTUALIZADO_CORRECTAMENTE = "✅ Envío actualizado de Tracking %s actualizado correctamente.";
     private final GenericEnviosService<Envio, Pedido> envioService;
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
@@ -31,12 +33,8 @@ public class EnvioConsoleController {
             if (pedido == null) {
                 return;
             }
-            String tracking = obtenerTrackingValido();
-            if (tracking == null) {
-                return;
-            }
 
-            Envio envio = crearEnvioEnMemoria(tracking);
+            Envio envio = crearEnvioEnMemoria();
 
             //transaccional para crear envio y actualizar pedido
             String numeroEnvio = envioService.crearEnvioYActualizarPedido(envio, pedido);
@@ -47,31 +45,13 @@ public class EnvioConsoleController {
         }
     }
 
-    private String obtenerTrackingValido() {
-        String tracking;
-        while (true) {
-            tracking = input.prompt("Ingrese el Tracking envío o 'q' para salir: ");
-            if (tracking.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
-                return null;
-            }
-            Envio envio = envioService.buscarPorTracking(tracking);
-            if (envio != null) {
-                System.out.println("❌ Ya existe un envío con ese Tracking. Intente nuevamente.");
-            } else {
-                break;
-            }
-        }
-        return tracking;
-    }
-
     private Pedido getPedido() {
         Pedido pedido;
         while (true) {
             String numeroPedido = input.leerNumeroPedido(
                     "Ingrese el Numero del Pedido (PED-XXXXXXXX) al que asignar el envío o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return null;
             }
             pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
@@ -125,7 +105,7 @@ public class EnvioConsoleController {
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX) o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Envio envio = envioService.buscarPorNumeroPedido(numeroPedido);
@@ -155,7 +135,7 @@ public class EnvioConsoleController {
             if (envio == null) {
                 return;
             }
-            System.out.println("✅ Envío actualizado de Tracking " + envio.getTracking() + " actualizado correctamente.");
+            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
         } catch (Exception e) {
             System.out.println("❌ Error al buscar envío por Tracking: " + e.getMessage());
         }
@@ -170,7 +150,7 @@ public class EnvioConsoleController {
             if (envio == null) {
                 return;
             }
-            System.out.println("✅ Envío actualizado de Tracking " + envio.getTracking() + " actualizado correctamente.");
+            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
         } catch (Exception e) {
             System.out.println("❌ Error al buscar envío por ID: " + e.getMessage());
         }
@@ -182,7 +162,7 @@ public class EnvioConsoleController {
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
@@ -201,7 +181,7 @@ public class EnvioConsoleController {
             if (envio == null) {
                 return;
             }
-            System.out.println("✅ Envío actualizado de Tracking " + envio.getTracking() + " actualizado correctamente.");
+            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
         } catch (Exception e) {
             System.out.println("❌ Error al buscar envío: " + e.getMessage());
         }
@@ -289,20 +269,16 @@ public class EnvioConsoleController {
         }
     }
 
-    private Envio crearEnvioEnMemoria(String tracking) {
+    private Envio crearEnvioEnMemoria() {
         System.out.println("\n... Configurando datos del Envío ...");
         Envio envio = new Envio();
-        envio.setTracking(tracking);
 
         envio.setCosto(input.leerDouble("Costo del envío: "));
-
         envio.setFechaDespacho(LocalDate.now());
         envio.setFechaEstimada(envio.getFechaDespacho().plusDays(5));
-
         envio.setEmpresa(elegirEmpresaEnvio());
         envio.setTipo(elegirTipoEnvio());
         envio.setEstado(EstadoEnvio.EN_PREPARACION);
-
         envio.setEliminado(false);
 
         return envio;

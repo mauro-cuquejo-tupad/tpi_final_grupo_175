@@ -43,7 +43,7 @@ public class MenuDisplay {
         System.out.println("=== GESTOR DE ENVIOS ===");
         System.out.println("=== MENU ===");
         System.out.println();
-        System.out.println("PEDIDOS");
+        System.out.println("PEDIDOS ===========================");
         System.out.println("  1  - Crear pedido");
         System.out.println("  2  - Listar pedidos");
         System.out.println("  3  - Buscar pedido por número");
@@ -54,8 +54,8 @@ public class MenuDisplay {
         System.out.println("  8  - Eliminar pedido por número");
         System.out.println("  9  - Eliminar pedido por ID");
         System.out.println();
-        System.out.println("ENVIOS");
-        System.out.println(" 10   - Crear envío");
+        System.out.println("ENVIOS =============================");
+        System.out.println(" 10  - Crear envío");
         System.out.println(" 11  - Listar envíos");
         System.out.println(" 12  - Buscar envío por tracking");
         System.out.println(" 13  - Buscar envío por número de pedido");
