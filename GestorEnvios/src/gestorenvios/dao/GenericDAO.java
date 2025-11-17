@@ -1,6 +1,7 @@
 package gestorenvios.dao;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -10,20 +11,14 @@ import java.util.List;
  */
 public interface GenericDAO<T> {
 
-    void insertar(T entidad) throws Exception;
+    void insertarTx(T entity, Connection conn) throws SQLException;
 
-    void insertarTx(T entidad, Connection conn) throws Exception;
+    void actualizarTx(T entity, Connection conn) throws SQLException;
 
-    void actualizar(T entidad) throws Exception;
+    void eliminarLogicoTx(Long id, Connection conn) throws SQLException;
 
-    void actualizarTx(T entidad, Connection conn) throws Exception;
+    T buscarPorId(Long id) throws SQLException; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
 
-    void eliminarLogico(Long id) throws Exception; // BORRADO LÓGICO. UPDATE
-
-    void eliminarLogicoTx(Long id, Connection conn) throws Exception;
-
-    T buscarPorId(Long id) throws Exception; // SELECT * FROM... WHERE id = ? AND eliminado = 0 (para sacar eliminados de la vista)
-
-    List<T> buscarTodos(Long cantidad, Long pagina) throws Exception; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
+    List<T> buscarTodos(Long cantidad, Long pagina) throws SQLException; // SELECT * FROM... WHERE eliminado = 0 (para sacar los eliminados de la vista)
 
 }

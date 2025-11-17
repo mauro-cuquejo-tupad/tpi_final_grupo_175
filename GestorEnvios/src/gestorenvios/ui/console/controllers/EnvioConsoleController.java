@@ -289,7 +289,7 @@ public class EnvioConsoleController {
                 System.out.println("❌ Error al eliminar envío: " + e.getMessage());
             }
         } else {
-            System.out.println("Operación cancelada.");
+            System.out.println("❌ Operación cancelada.");
         }
     }
 

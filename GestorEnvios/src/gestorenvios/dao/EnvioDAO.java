@@ -50,26 +50,16 @@ public class EnvioDAO implements GenericDAO<Envio> {
             + " WHERE p.eliminado = FALSE"
             + " AND p.numero = ?";
 
-
-    @Override
-    public void insertar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            insertarTx(envio, conn);
-        } catch (SQLException e) {
-            throw new SQLException("Error al insertar el envío: " + e.getMessage(), e);
-        }
-    }
-
     /**
      * Inserta un envío dentro de una transacción externa. Es vital para cuando
      * PedidosDAO guarda el pedido y necesita guardar el envío al mismo tiempo.
      *
      * @param envio El envío a insertar
      * @param conn  La conexión activa con la base de datos
-     * @throws java.lang.Exception Si ocurre un error durante la inserción
+     * @throws SQLException Si ocurre un error durante la inserción
      */
     @Override
-    public void insertarTx(Envio envio, Connection conn) throws Exception {
+    public void insertarTx(Envio envio, Connection conn) throws SQLException {
         try {
             PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
             setEnvioParameters(pstmt, envio);
@@ -85,16 +75,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
     }
 
     @Override
-    public void actualizar(Envio envio) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            actualizarTx(envio, conn);
-        } catch (SQLException e) {
-            throw new SQLException("Error al actualizar el envío: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void actualizarTx(Envio envio, Connection conn) throws Exception {
+    public void actualizarTx(Envio envio, Connection conn) throws SQLException {
         // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
@@ -128,16 +109,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
     }
 
     @Override
-    public void eliminarLogico(Long id) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            eliminarLogicoTx(id, conn);
-        } catch (SQLException e) {
-            throw new SQLException("Error al eliminar lógicamente el envío: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+    public void eliminarLogicoTx(Long id, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
             pstmt.setLong(1, id);
             if (pstmt.executeUpdate() == 0) {
@@ -147,7 +119,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
     }
 
     @Override
-    public Envio buscarPorId(Long id) throws Exception {
+    public Envio buscarPorId(Long id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
             pstmt.setLong(1, id);
 
@@ -197,7 +169,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
     }
 
     @Override
-    public List<Envio> buscarTodos(Long cantidad, Long pagina) throws Exception {
+    public List<Envio> buscarTodos(Long cantidad, Long pagina) throws SQLException {
         List<Envio> envios = new ArrayList<>();
 
         long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;

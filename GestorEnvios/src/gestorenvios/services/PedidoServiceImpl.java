@@ -134,20 +134,36 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
+    public void actualizar(Pedido pedido) throws ActualizacionEntityException {
+        validarPedido(pedido);
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
+            actualizarTx(pedido, transactionManager, conn);
+        } catch (Exception e) {
+            throw new ActualizacionEntityException("Error al actualizar el envío: " + e.getMessage());
+        }
+    }
+
+
+    private void actualizarTx(Pedido pedido,
+                              TransactionManager transactionManager,
+                              Connection conn) throws ActualizacionEntityException {
+        try {
+            transactionManager.startTransaction();
+            pedidoDAO.actualizarTx(pedido, conn);
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new EliminacionEntityException(e.getMessage());
+        }
+    }
+
+    @Override
     public void actualizarTx(Pedido pedido, Connection conn) throws ActualizacionEntityException {
         try {
             pedidoDAO.actualizarTx(pedido, conn);
         } catch (Exception e) {
             throw new ActualizacionEntityException("Error al actualizar el pedido (transaccional): " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void actualizar(Pedido pedido) throws ActualizacionEntityException {
-        try {
-            pedidoDAO.actualizar(pedido);
-        } catch (Exception e) {
-            throw new ActualizacionEntityException("Error al actualizar el pedido: " + e.getMessage());
         }
     }
 

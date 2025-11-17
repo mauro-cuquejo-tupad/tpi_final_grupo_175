@@ -38,6 +38,10 @@ public class MenuHandler {
         pedidoConsoleController.buscarPorId();
     }
 
+    public void actualizarPedidoPorNumero() {
+        pedidoConsoleController.actualizarPedido();
+    }
+
     public void eliminarPedidoPorNumero() {
         pedidoConsoleController.eliminarPedidoPorNumero();
     }

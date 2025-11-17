@@ -88,24 +88,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
 
     /**
-     * Inserta un nuevo pedido en la base de datos.
-     *
-     * @param pedido Pedido a insertar
-     * @throws java.lang.Exception Si falla la inserción
-     */
-
-    @Override
-    public void insertar(Pedido pedido) throws Exception {
-        // Usamos try-with-resources para la conexión y el statement
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            insertarTx(pedido, conn);
-        } catch (SQLException e) {
-            // Captura el error de SQL y lo relanza como una excepción específica
-            throw new SQLException("Error al insertar el pedido: " + e.getMessage());
-        }
-    }
-
-    /**
      * Inserta un pedido dentro de una transacción existente. NO crea nueva
      * conexión, recibe una Connection externa. NO cierra la conexión
      * (responsabilidad del caller, ej. un TransactionManager).
@@ -115,41 +97,18 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      *
      * @param pedido Pedido a insertar
      * @param conn   Conexión transaccional (NO se cierra en este método)
-     * @throws Exception Si falla la inserción
+     * @throws SQLException Si falla la inserción
      */
     @Override
-    public void insertarTx(Pedido pedido, Connection conn) throws Exception {
+    public void insertarTx(Pedido pedido, Connection conn) throws SQLException {
         PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
         setPedidoParameters(pstmt, pedido);
         pstmt.executeUpdate();
         setGeneratedId(pstmt, pedido);
     }
 
-    /**
-     * Actualiza un pedido existente en la base de datos. NO actualiza el flag
-     * "eliminado".
-     * <p>
-     * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
-     * eliminado (y no se puede encontrar).
-     * <p>
-     * IMPORTANTE: Este método puede cambiar las FKs: - Si pedido.estado == null
-     * → id_estado_pedido = NULL (desasociar) - Si pedido.envio == null →
-     * id_envio = NULL (desasociar)
-     *
-     * @param pedido pedido con los datos actualizados (id debe ser > 0)
-     * @throws Exception Si el pedido no existe o hay error de BD
-     */
     @Override
-    public void actualizar(Pedido pedido) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            actualizarTx(pedido, conn);
-        } catch (SQLException e) {
-            throw new SQLException("Error al actualizar el pedido: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void actualizarTx(Pedido pedido, Connection conn) throws Exception {
+    public void actualizarTx(Pedido pedido, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
             // Seteamos los parámetros del UPDATE
             pstmt.setString(1, pedido.getNumero());
@@ -179,29 +138,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         }
     }
 
-    /**
-     * Elimina lógicamente un pedido (soft delete). Marca eliminado=TRUE sin
-     * borrar físicamente la fila.
-     * <p>
-     * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
-     * eliminado
-     * <p>
-     * IMPORTANTE: NO elimina el envío asociado.
-     *
-     * @param id ID del pedido a eliminar
-     * @throws Exception Si el pedido no existe o hay error de BD
-     */
     @Override
-    public void eliminarLogico(Long id) throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            eliminarLogicoTx(id, conn);
-        } catch (SQLException e) {
-            throw new SQLException("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void eliminarLogicoTx(Long id, Connection conn) throws Exception {
+    public void eliminarLogicoTx(Long id, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
             pstmt.setLong(1, id);
             int rowsAffected = pstmt.executeUpdate();
@@ -219,10 +157,10 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * @param id ID del pedido a buscar
      * @return Pedido encontrado con su envío, o null si no existe o está
      * eliminado
-     * @throws Exception Si hay error de BD (captura SQLException y re-lanza)
+     * @throws SQLException Si hay error de BD (captura SQLException y re-lanza)
      */
     @Override
-    public Pedido buscarPorId(Long id) throws Exception {
+    public Pedido buscarPorId(Long id) throws SQLException {
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
@@ -251,10 +189,10 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      * @param cantidad Número de registros por página (si es null, usa 10 por defecto)
      * @param pagina   Número de página (1-indexed, si es null, usa 1 por defecto)
      * @return Lista de pedidos activos con sus envíos (puede estar vacía)
-     * @throws Exception Si hay error de BD
+     * @throws SQLException Si hay error de BD
      */
     @Override
-    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws Exception {
+    public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
 
         long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;

@@ -151,21 +151,22 @@ public class AppMenu {
             case 4 -> menuHandler.buscarPedidoPorTracking();
             case 5 -> menuHandler.buscarPedidoPorId();
             case 6 -> menuHandler.buscarPedidoPorCliente();
-            case 7 -> menuHandler.eliminarPedidoPorNumero();
-            case 8 -> menuHandler.eliminarPedidoPorId();
+            case 7 -> menuHandler.actualizarPedidoPorNumero();
+            case 8 -> menuHandler.eliminarPedidoPorNumero();
+            case 9 -> menuHandler.eliminarPedidoPorId();
 
             //envios
-            case 9 -> menuHandler.crearEnvio();
-            case 10 -> menuHandler.listarEnvios();
-            case 11 -> menuHandler.buscarEnvioPorTracking();
-            case 12 -> menuHandler.buscarEnvioPorNumeroPedido();
-            case 13 -> menuHandler.buscarEnvioPorId();
-            case 14 -> menuHandler.actualizarEstadoEnvioPorTracking();
-            case 15 -> menuHandler.actualizarEstadoEnvioPorNumeroPedido();
-            case 16 -> menuHandler.actualizarEstadoEnvioPorId();
-            case 17 -> menuHandler.eliminarEnvioPorTracking();
-            case 18 -> menuHandler.eliminarEnvioPorNumeroPedido();
-            case 19 -> menuHandler.eliminarEnvioPorId();
+            case 10 -> menuHandler.crearEnvio();
+            case 11 -> menuHandler.listarEnvios();
+            case 12 -> menuHandler.buscarEnvioPorTracking();
+            case 13 -> menuHandler.buscarEnvioPorNumeroPedido();
+            case 14 -> menuHandler.buscarEnvioPorId();
+            case 15 -> menuHandler.actualizarEstadoEnvioPorTracking();
+            case 16 -> menuHandler.actualizarEstadoEnvioPorNumeroPedido();
+            case 17 -> menuHandler.actualizarEstadoEnvioPorId();
+            case 18 -> menuHandler.eliminarEnvioPorTracking();
+            case 19 -> menuHandler.eliminarEnvioPorNumeroPedido();
+            case 20 -> menuHandler.eliminarEnvioPorId();
 
             //salir
             case 0 -> {
