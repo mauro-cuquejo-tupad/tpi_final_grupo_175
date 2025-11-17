@@ -69,7 +69,7 @@ public class EnvioConsoleController {
         Pedido pedido;
         while (true) {
             String numeroPedido = input.leerNumeroPedido(
-                    "Ingrese el NÚMERO de PEDIDO al que asignar el envío o 'q' para salir: ");
+                    "Ingrese el Numero del Pedido (PED-XXXXXXXX) al que asignar el envío o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
                 System.out.println("❌ Operación cancelada por el usuario.");
                 return null;
@@ -123,8 +123,12 @@ public class EnvioConsoleController {
     public void buscarPorNumeroPedido() {
         System.out.println("\n--- BUSCAR ENVIO POR NUMERO PEDIDO ---");
         try {
-            Pedido p = pedidoService.buscarPorNumeroPedido(
-                    input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX): "));
+            String numeroPedido = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX) o 'q' para salir: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return;
+            }
+            Pedido p = pedidoService.buscarPorNumeroPedido(numeroPedido);
 
             Envio envio = p.getEnvio();
             EnvioPrinter.mostrarResumen(envio);
@@ -177,8 +181,12 @@ public class EnvioConsoleController {
         System.out.println("\n--- ACTUALIZAR ENVÍO DE UN PEDIDO ---");
         Envio envio;
         try {
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(
-                    input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: "));
+            String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return;
+            }
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
 
             if (pedido == null) {
                 System.out.println("❌ Pedido no encontrado.");
@@ -237,8 +245,12 @@ public class EnvioConsoleController {
         System.out.println("\n--- ELIMINAR ENVÍO POR NUMERO PEDIDO ---");
         System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
         try {
-            Envio envio = envioService.buscarPorNumeroPedido(
-                    input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: "));
+            String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return;
+            }
+            Envio envio = envioService.buscarPorNumeroPedido(numeroPedido);
 
             eliminar(envio);
         } catch (Exception e) {

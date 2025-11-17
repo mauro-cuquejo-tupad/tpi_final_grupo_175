@@ -66,8 +66,12 @@ public class PedidoConsoleController {
     public void buscarPorNumero() {
         System.out.println("\n--- BUSCAR PEDIDO POR NUMERO ---");
         try {
-            String numero = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX): ");
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
+            String numeroPedido = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX) o 'q' para salir: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return;
+            }
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             PedidoPrinter.mostrarResumen(pedido);
         } catch (Exception e) {
             System.out.println("❌ Error al buscar por Numero: " + e.getMessage());
@@ -125,9 +129,13 @@ public class PedidoConsoleController {
     public void eliminarPedidoPorNumero() {
         System.out.println("\n--- ELIMINAR PEDIDO ---");
         try {
-            String numero = input.leerNumeroPedido("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX): ");
+            String numeroPedido = input.leerNumeroPedido("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX) o 'q' para salir: ");
+            if (numeroPedido.equalsIgnoreCase("q")) {
+                System.out.println("❌ Operación cancelada por el usuario.");
+                return;
+            }
 
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             eliminar(pedido);
             if (pedido == null) {
                 return;

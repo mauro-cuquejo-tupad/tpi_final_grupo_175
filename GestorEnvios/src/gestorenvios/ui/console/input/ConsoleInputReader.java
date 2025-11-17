@@ -50,7 +50,7 @@ public class ConsoleInputReader implements InputReader {
         while (true) {
             System.out.print(mensaje);
             String entrada = scanner.nextLine().trim();
-            if (entrada.matches("PED-\\d{8}")) return entrada;
+            if (entrada.matches("PED-\\d{8}") || entrada.equalsIgnoreCase("q")) return entrada;
             System.out.println("Error: Formato inválido. Use PED-XXXXXXXX.");
         }
     }
