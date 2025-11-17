@@ -1,0 +1,101 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "Service Layer" #LightYellow {
+
+    interface GenericService<T> {
+        +crear(T): String
+        +buscarTodos(Long, Long): List<T>
+        +buscarPorId(Long): T
+        +actualizar(T): void
+        +eliminar(T): void
+    }
+
+    interface GenericPedidosService<T> {
+        +actualizarTx(T, Connection): void
+        +buscarPorNumeroPedido(String): T
+        +buscarPorNumeroTracking(String): T
+        +buscarPorCliente(String, Long, Long): List<T>
+        +obtenerCantidadTotalDePedidos(): Long
+        +obtenerCantidadTotalDePedidosPorCliente(String): Long
+    }
+
+    interface GenericEnviosService<T, U> {
+        +buscarPorTracking(String): T
+        +buscarPorNumeroPedido(String): T
+        +obtenerCantidadTotalDeEnvios(): Long
+        +crearEnvioYActualizarPedido(T, U): String
+        +actualizarEstado(T, U): void
+    }
+
+    class PedidoServiceImpl {
+        -PedidoDAO pedidoDAO
+        --
+        +PedidoServiceImpl(PedidoDAO)
+        +crear(Pedido): String
+        +buscarTodos(Long, Long): List<Pedido>
+        +buscarPorId(Long): Pedido
+        +buscarPorNumeroPedido(String): Pedido
+        +buscarPorNumeroTracking(String): Pedido
+        +buscarPorCliente(String, Long, Long): List<Pedido>
+        +actualizar(Pedido): void
+        +actualizarTx(Pedido, Connection): void
+        +eliminar(Pedido): void
+        --
+        -generarNuevoNumeroPedido(): String
+        -validarPedido(Pedido): void
+    }
+
+    class EnvioServiceImpl {
+        -EnvioDAO envioDAO
+        -GenericPedidosService<Pedido> pedidosService
+        --
+        +EnvioServiceImpl(EnvioDAO, GenericPedidosService)
+        +crear(Envio): String
+        +buscarTodos(Long, Long): List<Envio>
+        +buscarPorId(Long): Envio
+        +buscarPorTracking(String): Envio
+        +buscarPorNumeroPedido(String): Envio
+        +actualizar(Envio): void
+        +eliminar(Envio): void
+        +crearEnvioYActualizarPedido(Envio, Pedido): String
+        +actualizarEstado(Envio, Pedido): void
+        --
+        -validarEnvio(Envio): void
+        -generarNumeroTracking(): String
+    }
+}
+
+' ========================================
+' RELACIONES - SERVICIOS
+' ========================================
+
+GenericService <|-- GenericPedidosService : extends
+GenericService <|-- GenericEnviosService : extends
+GenericPedidosService <|.. PedidoServiceImpl : implements
+GenericEnviosService <|.. EnvioServiceImpl : implements
+
+PedidoServiceImpl --> PedidoDAO : usa
+EnvioServiceImpl --> EnvioDAO : usa
+EnvioServiceImpl --> GenericPedidosService : usa
+
+PedidoServiceImpl ..> TransactionManager : <<usa>>
+EnvioServiceImpl ..> TransactionManager : <<usa>>
+
+note right of EnvioServiceImpl
+  Gestiona transacciones complejas:
+  - crearEnvioYActualizarPedido()
+  - Actualización de estados
+end note
+
+@enduml
+

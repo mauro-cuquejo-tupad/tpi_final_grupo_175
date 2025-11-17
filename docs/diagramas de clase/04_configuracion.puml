@@ -1,0 +1,57 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "Configuration" #LightSalmon {
+
+    class DatabaseConnection {
+        -{static} URL: String
+        -{static} USER: String
+        -{static} PASSWORD: String
+        -{static} DRIVER: String
+        --
+        +{static} getConnection(): Connection
+        -{static} cargarConfiguracion(): void
+    }
+
+    class TransactionManager {
+        -Connection connection
+        --
+        +TransactionManager(Connection)
+        +startTransaction(): void
+        +commit(): void
+        +rollback(): void
+        +close(): void
+    }
+
+    class ApplicationConfig {
+        -{static} Properties properties
+        --
+        +{static} getProperty(String): String
+        -{static} cargarPropiedades(): void
+    }
+}
+
+' ========================================
+' RELACIONES - CONFIGURACIÓN
+' ========================================
+
+DatabaseConnection --> ApplicationConfig : usa
+TransactionManager --> DatabaseConnection : usa
+
+note bottom of DatabaseConnection
+  Singleton para conexiones
+  Carga configuración desde
+  application.properties
+end note
+
+@enduml
+

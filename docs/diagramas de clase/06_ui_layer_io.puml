@@ -1,0 +1,86 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "UI Layer - Input/Output" #Lavender {
+
+    interface InputReader {
+        +nextLine(): String
+        +nextInt(): int
+        +nextDouble(): double
+        +nextLong(): long
+    }
+
+    class ConsoleInputReader {
+        -Scanner scanner
+        --
+        +ConsoleInputReader(Scanner)
+        +nextLine(): String
+        +nextInt(): int
+        +nextDouble(): double
+        +nextLong(): long
+    }
+
+    class MenuDisplay {
+        +{static} mostrarMenuPrincipal(): void
+        +{static} mostrarEstadosPedido(): void
+        +{static} mostrarEstadosEnvio(): void
+        +{static} mostrarEmpresasEnvio(): void
+        +{static} mostrarTiposEnvio(): void
+    }
+
+    class PedidoPrinter {
+        +{static} imprimirPedido(Pedido): void
+        +{static} imprimirListaPedidos(List<Pedido>): void
+    }
+
+    class EnvioPrinter {
+        +{static} imprimirEnvio(Envio): void
+        +{static} imprimirListaEnvios(List<Envio>): void
+    }
+
+    class Paginador<T> {
+        -InputReader input
+        --
+        +Paginador(InputReader)
+        +paginar(BiFunction, Consumer, Long, int): void
+    }
+}
+
+' ========================================
+' RELACIONES - UI
+' ========================================
+
+AppMenu --> MenuHandler : usa
+AppMenu --> InputReader : usa
+AppMenu --> MenuDisplay : usa
+AppMenu ..> GenericPedidosService : <<crea>>
+AppMenu ..> GenericEnviosService : <<crea>>
+
+MenuHandler --> PedidoConsoleController : delega
+MenuHandler --> EnvioConsoleController : delega
+MenuHandler --> InputReader : usa
+
+PedidoConsoleController --> GenericPedidosService : usa
+PedidoConsoleController --> InputReader : usa
+PedidoConsoleController ..> PedidoPrinter : <<usa>>
+PedidoConsoleController ..> Paginador : <<usa>>
+
+EnvioConsoleController --> GenericEnviosService : usa
+EnvioConsoleController --> GenericPedidosService : usa
+EnvioConsoleController --> InputReader : usa
+EnvioConsoleController ..> EnvioPrinter : <<usa>>
+EnvioConsoleController ..> Paginador : <<usa>>
+
+InputReader <|.. ConsoleInputReader : implements
+
+@enduml
+
