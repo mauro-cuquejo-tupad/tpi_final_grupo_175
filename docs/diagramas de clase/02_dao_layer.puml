@@ -1,0 +1,81 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "DAO Layer" #LightGreen {
+
+    interface GenericDAO<T> {
+        +insertar(T): void
+        +insertarTx(T, Connection): void
+        +actualizar(T): void
+        +actualizarTx(T, Connection): void
+        +eliminarLogico(Long): void
+        +eliminarLogicoTx(Long, Connection): void
+        +buscarPorId(Long): T
+        +buscarTodos(Long, Long): List<T>
+    }
+
+    class PedidoDAO {
+        -{static} QUERY_BASE: String
+        -{static} INSERT_SQL: String
+        -{static} UPDATE_SQL: String
+        -{static} DELETE_SQL: String
+        --
+        +insertar(Pedido): void
+        +insertarTx(Pedido, Connection): void
+        +actualizar(Pedido): void
+        +buscarPorId(Long): Pedido
+        +buscarTodos(Long, Long): List<Pedido>
+        +buscarPorNumero(String): Pedido
+        +buscarPorTracking(String): Pedido
+        +buscarPorClienteNombre(String, Long, Long): List<Pedido>
+        +buscarUltimoNumeroPedido(): String
+        +obtenerCantidadTotalDePedidos(): Long
+        --
+        -mapResultSetToPedido(ResultSet): Pedido
+        -setPedidoParameters(PreparedStatement, Pedido): void
+    }
+
+    class EnvioDAO {
+        -{static} QUERY_BASE: String
+        -{static} INSERT_SQL: String
+        -{static} UPDATE_SQL: String
+        -{static} DELETE_SQL: String
+        --
+        +insertar(Envio): void
+        +insertarTx(Envio, Connection): void
+        +actualizar(Envio): void
+        +buscarPorId(Long): Envio
+        +buscarTodos(Long, Long): List<Envio>
+        +buscarPorTracking(String): Envio
+        +buscarPorNumeroPedido(String): Envio
+        +obtenerCantidadTotalDeEnvios(): Long
+        --
+        -mapResultSetToEnvio(ResultSet): Envio
+        -setEnvioParameters(PreparedStatement, Envio): void
+    }
+}
+
+
+' ========================================
+' RELACIONES - DAO
+' ========================================
+
+GenericDAO <|.. PedidoDAO : implements
+GenericDAO <|.. EnvioDAO : implements
+PedidoDAO ..> Pedido : <<maneja>>
+EnvioDAO ..> Envio : <<maneja>>
+PedidoDAO --> DatabaseConnection : <<usa>>
+EnvioDAO --> DatabaseConnection : <<usa>>
+
+
+@enduml
+

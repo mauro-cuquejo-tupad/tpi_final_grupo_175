@@ -1,0 +1,100 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "UI Layer - Controllers" #LightBlue {
+
+    class AppMenu {
+        -InputReader input
+        -MenuHandler menuHandler
+        -boolean running
+        -Map<Integer, Runnable> menuActions
+        --
+        +AppMenu()
+        +run(): void
+        -cargarAccionesMenu(): Map
+        -processOption(int): void
+        -createPedidoService(): GenericPedidosService
+        -crearEnvioService(GenericPedidosService): GenericEnviosService
+    }
+
+    class MenuHandler {
+        -GenericPedidosService<Pedido> pedidoService
+        -GenericEnviosService<Envio, Pedido> envioService
+        -InputReader input
+        --
+        +MenuHandler(GenericPedidosService, GenericEnviosService, InputReader)
+        +crearPedido(): void
+        +listarPedidos(): void
+        +buscarPedidoPorNumero(): void
+        +actualizarPedidoPorNumero(): void
+        +eliminarPedidoPorNumero(): void
+        +crearEnvio(): void
+        +listarEnvios(): void
+        +buscarEnvioPorTracking(): void
+        .. otros métodos de menú ..
+    }
+
+    class PedidoConsoleController {
+        -GenericPedidosService<Pedido> pedidoService
+        -InputReader input
+        --
+        +PedidoConsoleController(GenericPedidosService, InputReader)
+        +crearPedido(): void
+        +buscarPorNumero(): Pedido
+        +buscarPorId(): Pedido
+        +actualizarPedido(Pedido): void
+        +eliminarPedido(Pedido): void
+    }
+
+    class EnvioConsoleController {
+        -GenericEnviosService<Envio, Pedido> envioService
+        -GenericPedidosService<Pedido> pedidoService
+        -InputReader input
+        --
+        +EnvioConsoleController(GenericEnviosService, GenericPedidosService, InputReader)
+        +crearEnvio(): void
+        +buscarPorTracking(): Envio
+        +buscarPorNumeroPedido(): Envio
+        +actualizarEnvio(Envio): void
+        +eliminarEnvio(Envio): void
+    }
+}
+
+' ========================================
+' RELACIONES - UI
+' ========================================
+
+AppMenu --> MenuHandler : usa
+AppMenu --> InputReader : usa
+AppMenu --> MenuDisplay : usa
+AppMenu ..> GenericPedidosService : <<crea>>
+AppMenu ..> GenericEnviosService : <<crea>>
+
+MenuHandler --> PedidoConsoleController : delega
+MenuHandler --> EnvioConsoleController : delega
+MenuHandler --> InputReader : usa
+
+PedidoConsoleController --> GenericPedidosService : usa
+PedidoConsoleController --> InputReader : usa
+PedidoConsoleController ..> PedidoPrinter : <<usa>>
+PedidoConsoleController ..> Paginador : <<usa>>
+
+EnvioConsoleController --> GenericEnviosService : usa
+EnvioConsoleController --> GenericPedidosService : usa
+EnvioConsoleController --> InputReader : usa
+EnvioConsoleController ..> EnvioPrinter : <<usa>>
+EnvioConsoleController ..> Paginador : <<usa>>
+
+InputReader <|.. ConsoleInputReader : implements
+
+@enduml
+

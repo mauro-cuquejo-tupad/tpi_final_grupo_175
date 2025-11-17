@@ -1,0 +1,78 @@
+@startuml Diagrama_de_Capas
+' https://plantuml.com/component-diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+top to bottom direction
+skinparam packageStyle rectangle
+
+package "MAIN APPLICATION" #LightCyan {
+  [GestorEnvios.main()]
+}
+
+package "UI LAYER" #LightBlue {
+  [AppMenu]
+  [MenuHandler]
+  [Controllers]
+  [Input/Output]
+}
+
+package "SERVICE LAYER" #LightYellow {
+  [PedidoServiceImpl]
+  [EnvioServiceImpl]
+}
+
+package "DAO LAYER" #LightGreen {
+  [PedidoDAO]
+  [EnvioDAO]
+  [GenericDAO]
+}
+
+package "CONFIGURATION LAYER" #LightSalmon {
+    [ApplicationConfig]
+    [TransactionManager]
+    [DatabaseConnection]
+}
+
+database "MYSQL DATABASE" {
+  [Pedidos]
+  [Envios]
+}
+
+' Relationships
+"MAIN APPLICATION" -d-> "UI LAYER"
+'[GestorEnvios.main()] --> AppMenu
+
+AppMenu -r-> MenuHandler
+MenuHandler -r-> Controllers
+Controllers -r-> [Input/Output]
+"UI LAYER" -d-> "SERVICE LAYER"
+'Controllers --> PedidoServiceImpl
+'Controllers --> EnvioServiceImpl
+
+PedidoServiceImpl <-r-> EnvioServiceImpl
+"SERVICE LAYER" -d-> "DAO LAYER"
+'EnvioServiceImpl --> PedidoDAO
+'EnvioServiceImpl --> EnvioDAO
+
+'PedidoDAO <-r-> EnvioDAO
+EnvioDAO -l-> GenericDAO
+PedidoDAO -r-> GenericDAO
+
+"DAO LAYER" -d-> "CONFIGURATION LAYER"
+'GenericDAO --> TransactionManager
+
+ApplicationConfig -r-> TransactionManager
+TransactionManager -r-> DatabaseConnection
+"CONFIGURATION LAYER" -d-> "MYSQL DATABASE"
+'DatabaseConnection --> Pedidos
+'DatabaseConnection --> Envios
+
+Pedidos <-r-> Envios
+
+@enduml

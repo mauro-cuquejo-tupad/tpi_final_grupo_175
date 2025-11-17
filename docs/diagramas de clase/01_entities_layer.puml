@@ -1,0 +1,114 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "Entities" #LightCyan {
+
+    class Pedido {
+        -Long id
+        -Boolean eliminado
+        -String numero
+        -LocalDate fecha
+        -String clienteNombre
+        -Double total
+        -EstadoPedido estado
+        -Envio envio
+        --
+        +getId(): Long
+        +setId(Long): void
+        +getNumero(): String
+        +getFecha(): LocalDate
+        +getEstado(): EstadoPedido
+        +getEnvio(): Envio
+        .. otros getters/setters ..
+    }
+
+    class Envio {
+        -Long id
+        -Boolean eliminado
+        -String tracking
+        -EmpresaEnvio empresa
+        -TipoEnvio tipo
+        -double costo
+        -LocalDate fechaDespacho
+        -LocalDate fechaEstimada
+        -EstadoEnvio estado
+        --
+        +getId(): Long
+        +getTracking(): String
+        +getEmpresa(): EmpresaEnvio
+        +getTipo(): TipoEnvio
+        +getEstado(): EstadoEnvio
+        .. otros getters/setters ..
+    }
+
+    enum EstadoPedido {
+        NUEVO
+        FACTURADO
+        ENVIADO
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EstadoPedido
+    }
+
+    enum EstadoEnvio {
+        EN_PREPARACION
+        EN_TRANSITO
+        ENTREGADO
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EstadoEnvio
+    }
+
+    enum EmpresaEnvio {
+        CORREO_ARGENTINO
+        ANDREANI
+        OCA
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): EmpresaEnvio
+    }
+
+    enum TipoEnvio {
+        ESTANDAR
+        EXPRES
+        --
+        -int id
+        --
+        +getId(): int
+        +{static} fromId(int): TipoEnvio
+    }
+}
+
+' ========================================
+' RELACIONES - ENTIDADES
+' ========================================
+
+Pedido "1" o-- "0..1" Envio : tiene >
+Pedido --> EstadoPedido : usa
+Envio --> EstadoEnvio : usa
+Envio --> EmpresaEnvio : usa
+Envio --> TipoEnvio : usa
+
+note right of Pedido
+  Relación 1:1 con Envío
+  Baja lógica (campo eliminado)
+  Número autogenerado: PED-00000001
+end note
+
+@enduml
+

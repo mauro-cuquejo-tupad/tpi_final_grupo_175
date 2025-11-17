@@ -1,0 +1,52 @@
+@startuml Diagrama_Clases_Gestor_Envios
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #6C757D
+skinparam packageBackgroundColor #E9ECEF
+skinparam packageBorderColor #495057
+
+title Sistema Gestor de Envíos - Diagrama de Clases UML
+
+package "Exceptions" #MistyRose {
+
+    class CreacionEntityException {
+        +CreacionEntityException(String)
+    }
+
+    class ConsultaEntityException {
+        +ConsultaEntityException(String)
+    }
+
+    class ActualizacionEntityException {
+        +ActualizacionEntityException(String)
+    }
+
+    class EliminacionEntityException {
+        +EliminacionEntityException(String)
+    }
+}
+
+' ========================================
+' RELACIONES - EXCEPCIONES
+' ========================================
+
+Exception <|-- CreacionEntityException
+Exception <|-- ConsultaEntityException
+Exception <|-- ActualizacionEntityException
+Exception <|-- EliminacionEntityException
+
+PedidoServiceImpl ..> CreacionEntityException : <<lanza>>
+PedidoServiceImpl ..> ConsultaEntityException : <<lanza>>
+PedidoServiceImpl ..> ActualizacionEntityException : <<lanza>>
+PedidoServiceImpl ..> EliminacionEntityException : <<lanza>>
+
+EnvioServiceImpl ..> CreacionEntityException : <<lanza>>
+EnvioServiceImpl ..> ConsultaEntityException : <<lanza>>
+EnvioServiceImpl ..> ActualizacionEntityException : <<lanza>>
+EnvioServiceImpl ..> EliminacionEntityException : <<lanza>>
+
+@enduml
+
