@@ -8,14 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object para la entidad Pedidos. Gestiona todas las operaciones de
- * persistencia de pedidos en la base de datos.
- *
+ * DAO para operaciones CRUD y consultas sobre la entidad Pedido.
  */
 public class PedidoDAO implements GenericDAO<Pedido> {
     private static final String CAMPOS_PEDIDO = " p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio,"
             + " e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
-            + " e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado ";
+            + " e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado e.eliminado AS envio_eliminado ";
 
     private static final String QUERY_BASE = "SELECT" + CAMPOS_PEDIDO + " FROM Pedido p";
 
@@ -23,7 +21,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     public static final String COUNT_SQL_BY_NAME = "SELECT COUNT(*) AS total FROM Pedido p"
             + " WHERE p.eliminado = FALSE AND (UPPER(p.cliente_nombre) LIKE ?)";
 
-    /* Query de inserción de pedido.*/
+    /**
+     * Query de inserción de pedido.
+     */
     private static final String INSERT_SQL = "INSERT INTO Pedido (numero, fecha, cliente_nombre, total, id_estado_pedido, id_envio) VALUES (?, ?, ?, ?, ?, ?)";
 
 
@@ -85,6 +85,14 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             + " WHERE p.eliminado = 0 AND e.tracking = ?";
 
     private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) AS numero FROM Pedido";
+    public static final String PEDIDO_ID = "id";
+    public static final String PEDIDO_NUMERO = "numero";
+    public static final String PEDIDO_FECHA = "fecha";
+    public static final String PEDIDO_CLIENTE_NOMBRE = "cliente_nombre";
+    public static final String PEDIDO_TOTAL = "total";
+    public static final String PEDIDO_ELIMINADO = "eliminado";
+    public static final String PEDIDO_ID_ESTADO_PEDIDO = "id_estado_pedido";
+    public static final String PEDIDO_ENVIO_ID = "envio_id";
 
 
     /**
@@ -107,10 +115,16 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         setGeneratedId(pstmt, pedido);
     }
 
+    /**
+     * Actualiza un pedido existente dentro de una transacción.
+     *
+     * @param pedido Pedido a actualizar
+     * @param conn   Conexión transaccional
+     * @throws SQLException Si falla la actualización
+     */
     @Override
     public void actualizarTx(Pedido pedido, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
-            // Seteamos los parámetros del UPDATE
             pstmt.setString(1, pedido.getNumero());
             pstmt.setDate(2, Date.valueOf(pedido.getFecha()));
             pstmt.setString(3, pedido.getClienteNombre());
@@ -138,6 +152,13 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         }
     }
 
+    /**
+     * Realiza un borrado lógico de un pedido (marca eliminado).
+     *
+     * @param id   ID del pedido
+     * @param conn Conexión transaccional
+     * @throws SQLException Si falla la operación
+     */
     @Override
     public void eliminarLogicoTx(Long id, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
@@ -151,8 +172,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Obtiene un pedido por su ID. Incluye su envío asociado mediante LEFT JOIN
-     * (carga eager).
+     * Busca un pedido por su ID, incluyendo su envío asociado.
      *
      * @param id ID del pedido a buscar
      * @return Pedido encontrado con su envío, o null si no existe o está
@@ -165,18 +185,14 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
-            // Seteamos el ID
             pstmt.setLong(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                // Si se encuentra resultado:
                 if (rs.next()) {
-                    // construimos cno el método
-                    return mapPedido(rs);
+                    return toPedido(rs);
                 }
             }
         } catch (SQLException e) {
-            // Relanzamos el error con un mensaje claro
             throw new SQLException("Error al obtener pedido por ID: " + e.getMessage(), e);
         }
         return null;
@@ -208,7 +224,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    pedidos.add(mapPedido(rs));
+                    pedidos.add(toPedido(rs));
                 }
             }
         } catch (SQLException e) {
@@ -217,8 +233,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
         return pedidos;
     }
-
-    // OTROS
 
     /**
      * Busca pedidos por nombre de cliente con búsqueda flexible (LIKE). Permite
@@ -235,7 +249,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El Nombre del Cliente no puede estar vacío");
         }
-
         List<Pedido> pedidos = new ArrayList<>();
 
         long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
@@ -246,7 +259,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NAME_SQL)) {
 
-            // Construimos el patrón LIKE: %nombre%
             String searchPattern = "%" + nombre.toUpperCase() + "%";
 
             pstmt.setString(1, searchPattern);
@@ -255,8 +267,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    // Reutilizamos el "mapPedido" que ya construimos
-                    pedidos.add(mapPedido(rs));
+                    pedidos.add(toPedido(rs));
                 }
             }
         } catch (SQLException e) {
@@ -278,24 +289,20 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             throw new IllegalArgumentException("El número de pedido no puede estar vacío");
         }
 
-        // Usamos la constante
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_NUMERO_SQL)) {
 
-            // Seteamos el número exacto
             pstmt.setString(1, numero.trim());
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // Reutilizamos el "mapPedido"
-                    return mapPedido(rs);
+                    return toPedido(rs);
                 }
             }
         } catch (SQLException e) {
             throw new SQLException("Error al buscar pedido por número: " + e.getMessage(), e);
         }
 
-        // No se encontró
         return null;
     }
 
@@ -315,13 +322,12 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SEARCH_BY_TRACKING_SQL)) {
 
-            // Seteamos el tracking (String)
             pstmt.setString(1, tracking.trim());
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
 
-                    return mapPedido(rs);
+                    return toPedido(rs);
                 }
             }
         } catch (SQLException e) {
@@ -331,32 +337,26 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         return null;
     }
 
-    // OTROS MÉTODOS HELPERS
-
     /**
-     * Método privado para "setear" todos los parámetros del PreparedStatement
-     * de inserción.
+     * Setea los parámetros de un PreparedStatement para insertar un pedido.
+     *
+     * @param pstmt  PreparedStatement
+     * @param pedido Pedido
+     * @throws SQLException Si hay error de BD
      */
     private void setPedidoParameters(PreparedStatement pstmt, Pedido pedido) throws SQLException {
 
         pstmt.setString(1, pedido.getNumero());
-
         pstmt.setDate(2, java.sql.Date.valueOf(pedido.getFecha()));
-
         pstmt.setString(3, pedido.getClienteNombre());
-
         pstmt.setDouble(4, pedido.getTotal());
 
-        // --- Manejo de FK para el Estado (Enum) ---
-        // Verificamos que el objeto Enum no sea nulo antes de pedir su ID
         if (pedido.getEstado() != null) {
             pstmt.setInt(5, pedido.getEstado().getId());
         } else {
             pstmt.setNull(5, java.sql.Types.INTEGER);
         }
 
-        // --- Manejo de FK para el Envío (Objeto) ---
-        // Chequeamos si el envío no es nulo Y si su ID no es nulo
         if (pedido.getEnvio() != null && pedido.getEnvio().getId() != null && pedido.getEnvio().getId() > 0) {
             pstmt.setLong(6, pedido.getEnvio().getId());
         } else {
@@ -365,89 +365,75 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Método privado para recuperar el ID autogenerado y guardarlo en el objeto
-     * "pedido".
+     * Recupera el ID autogenerado y lo asigna al pedido.
+     *
+     * @param pstmt  PreparedStatement
+     * @param pedido Pedido
+     * @throws SQLException Si hay error de BD
      */
     private void setGeneratedId(PreparedStatement pstmt, Pedido pedido) throws SQLException {
-        // Usamos try-with-resources para el ResultSet
         try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
             if (generatedKeys.next()) {
-                // Seteamos el ID generado en el objeto original
                 pedido.setId(generatedKeys.getLong(1));
             }
         }
     }
 
     /**
-     * Método helper para mapear un ResultSet a un objeto Pedidos. Está diseñado
-     * para manejar el LEFT JOIN de la consulta SELECT_BY_ID_SQL.
+     * Mapea un ResultSet a un objeto Pedido, incluyendo su envío asociado.
      *
-     * @param rs El ResultSet en la fila actual
-     * @return Un objeto Pedidos completamente populado
-     * @throws SQLException Si hay error al leer del ResultSet
+     * @param rs ResultSet
+     * @return Pedido mapeado
+     * @throws SQLException Si hay error de BD
      */
-    private Pedido mapPedido(ResultSet rs) throws SQLException {
+    private Pedido toPedido(ResultSet rs) throws SQLException {
 
-        // --- Mapeamos la entidad principal: Pedidos ---
         Pedido pedido = new Pedido();
-        pedido.setId(rs.getLong("id"));
-        pedido.setNumero(rs.getString("numero"));
-        pedido.setFecha(rs.getDate("fecha").toLocalDate()); // Convertir sql.Date a time.LocalDate
-        pedido.setClienteNombre(rs.getString("cliente_nombre"));
-        pedido.setTotal(rs.getDouble("total"));
-        pedido.setEliminado(rs.getBoolean("eliminado"));
+        pedido.setId(rs.getLong(PEDIDO_ID));
+        pedido.setNumero(rs.getString(PEDIDO_NUMERO));
+        pedido.setFecha(rs.getDate(PEDIDO_FECHA).toLocalDate());
+        pedido.setClienteNombre(rs.getString(PEDIDO_CLIENTE_NOMBRE));
+        pedido.setTotal(rs.getDouble(PEDIDO_TOTAL));
+        pedido.setEliminado(rs.getBoolean(PEDIDO_ELIMINADO));
 
-        // --- Mapeamos el Enum EstadoPedido ---
-        int idEstadoPedido = rs.getInt("id_estado_pedido");
-        pedido.setEstado(EstadoPedido.fromId(idEstadoPedido)); // Usa "fromId" del Enum
+        int idEstadoPedido = rs.getInt(PEDIDO_ID_ESTADO_PEDIDO);
+        pedido.setEstado(EstadoPedido.fromId(idEstadoPedido));
 
-        // --- Mapeamos la entidad asociada: Envios (del LEFT JOIN) ---
-        // Primero, revisamos si el LEFT JOIN trajo un envío.
-        // Lo hacemos revisando el ID del envío.
-        long idEnvio = rs.getLong("envio_id");
+        long idEnvio = rs.getLong(PEDIDO_ENVIO_ID);
 
         if (rs.wasNull()) {
-            // No se encontró envío (id_envio era NULL en la BD o el LEFT JOIN falló)
             pedido.setEnvio(null);
         } else {
-            Envio envio = new Envio();
-            envio.setId(idEnvio);
-            envio.setTracking(rs.getString("envio_tracking"));
-            envio.setCosto(rs.getDouble("envio_costo"));
-
-            // Asumiendo que 'fecha_despacho' y 'fecha_estimada' pueden ser nulas
-            if (rs.getDate("envio_fecha_despacho") != null) {
-                envio.setFechaDespacho(rs.getDate("envio_fecha_despacho").toLocalDate());
-
-            }
-            if (rs.getDate("envio_fecha_estimada") != null) {
-                envio.setFechaEstimada(rs.getDate("envio_fecha_estimada").toLocalDate());
-            }
-
-            // Mapear los Enums de Envío (asumiendo que tienes helpers "fromId")
-            envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("envio_id_empresa")));
-            envio.setTipo(TipoEnvio.fromId(rs.getInt("envio_id_tipo")));
-            envio.setEstado(EstadoEnvio.fromId(rs.getInt("envio_id_estado")));
-            envio.setEliminado(rs.getBoolean("eliminado"));
-
-            // Finalmente, asociamos el envío al pedido
+            Envio envio = EnvioDAO.toEnvio(rs, idEnvio);
             pedido.setEnvio(envio);
         }
-
         return pedido;
     }
 
+    /**
+     * Obtiene el último número de pedido insertado en una transacción.
+     *
+     * @param conn Conexión transaccional
+     * @return Último número de pedido
+     * @throws SQLException Si hay error de BD
+     */
     public String buscarUltimoNumeroPedidoTx(Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(SEARCH_MAX_NUMERO_PEDIDO)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("numero");
+                    return rs.getString(PEDIDO_NUMERO);
                 }
             }
         }
         return null;
     }
 
+    /**
+     * Obtiene la cantidad total de pedidos activos.
+     *
+     * @return Cantidad total
+     * @throws SQLException Si hay error de BD
+     */
     public Long obtenerCantidadTotalDePedidos() throws SQLException {
         long cantidad = 0L;
         try (Connection conn = DatabaseConnection.getConnection();
@@ -455,29 +441,31 @@ public class PedidoDAO implements GenericDAO<Pedido> {
              ResultSet rs = pstmt.executeQuery()) {
 
             if (rs.next()) {
-                cantidad = rs.getLong("total");
+                cantidad = rs.getLong(PEDIDO_TOTAL);
             }
         }
         return cantidad;
     }
 
+    /**
+     * Obtiene la cantidad total de pedidos filtrando por nombre de cliente.
+     *
+     * @param nombre Nombre del cliente
+     * @return Cantidad total
+     * @throws SQLException Si hay error de BD
+     */
     public Long obtenerCantidadTotalDePedidosPorNombre(String nombre) throws SQLException {
         long cantidad = 0L;
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(COUNT_SQL_BY_NAME)) {
-            // Construimos el patrón LIKE: %nombre%
             String searchPattern = "%" + nombre + "%";
-
             pstmt.setString(1, searchPattern);
-
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                cantidad = rs.getLong("total");
+                cantidad = rs.getLong(PEDIDO_TOTAL);
             }
         }
         return cantidad;
     }
-
-
 }

@@ -326,6 +326,27 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envio;
     }
 
+    public static Envio toEnvio(ResultSet rs, Long idEnvio) throws SQLException {
+        Envio envio = new Envio();
+        envio.setId(idEnvio);
+        envio.setTracking(rs.getString("envio_tracking"));
+        envio.setCosto(rs.getDouble("envio_costo"));
+
+        if (rs.getDate("envio_fecha_despacho") != null) {
+            envio.setFechaDespacho(rs.getDate("envio_fecha_despacho").toLocalDate());
+
+        }
+        if (rs.getDate("envio_fecha_estimada") != null) {
+            envio.setFechaEstimada(rs.getDate("envio_fecha_estimada").toLocalDate());
+        }
+
+        envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("envio_id_empresa")));
+        envio.setTipo(TipoEnvio.fromId(rs.getInt("envio_id_tipo")));
+        envio.setEstado(EstadoEnvio.fromId(rs.getInt("envio_id_estado")));
+        envio.setEliminado(rs.getBoolean("envio_eliminado"));
+        return envio;
+    }
+
     /**
      * Obtiene el total de envíos activos (no eliminados) en la base de datos.
      *
