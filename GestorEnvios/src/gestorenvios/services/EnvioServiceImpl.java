@@ -148,6 +148,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
             envioDAO.eliminarLogicoTx(envio.getId(), conn);
             Pedido pedido = pedidosService.buscarPorNumeroTracking(envio.getTracking());
             pedido.setEstado(EstadoPedido.NUEVO);
+            pedido.setEnvio(null);
             pedidosService.actualizarTx(pedido, conn);
             transactionManager.commit();
         } catch (Exception e) {
@@ -158,6 +159,7 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     @Override
     public String crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
+        //validamos para evitar una conexion a la base de datos con registros invalidos
         validarEnvio(envio);
         try (Connection conn = DatabaseConnection.getConnection();
              TransactionManager transactionManager = new TransactionManager(conn)) {

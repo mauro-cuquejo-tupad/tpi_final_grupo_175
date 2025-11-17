@@ -128,9 +128,8 @@ public class EnvioConsoleController {
                 System.out.println("❌ Operación cancelada por el usuario.");
                 return;
             }
-            Pedido p = pedidoService.buscarPorNumeroPedido(numeroPedido);
+            Envio envio = envioService.buscarPorNumeroPedido(numeroPedido);
 
-            Envio envio = p.getEnvio();
             EnvioPrinter.mostrarResumen(envio);
         } catch (Exception e) {
             System.out.println("❌ Error al buscar por Numero Pedido: " + e.getMessage());
@@ -232,7 +231,6 @@ public class EnvioConsoleController {
 
     public void eliminarEnvioPorTracking() {
         System.out.println("\n--- ELIMINAR ENVÍO POR TRACKING ---");
-        System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
         try {
             Envio envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
             eliminar(envio);
@@ -243,7 +241,6 @@ public class EnvioConsoleController {
 
     public void eliminarEnvioPorNumeroPedido() {
         System.out.println("\n--- ELIMINAR ENVÍO POR NUMERO PEDIDO ---");
-        System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
@@ -260,7 +257,6 @@ public class EnvioConsoleController {
 
     public void eliminarEnvioPorId() {
         System.out.println("\n--- ELIMINAR ENVÍO POR ID ---");
-        System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
         try {
             Envio envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a eliminar: "));
             eliminar(envio);

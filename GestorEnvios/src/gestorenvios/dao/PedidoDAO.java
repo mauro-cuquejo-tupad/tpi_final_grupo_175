@@ -410,11 +410,10 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             // No se encontró envío (id_envio era NULL en la BD o el LEFT JOIN falló)
             pedido.setEnvio(null);
         } else {
-            // ¡Sí encontramos un envío! Lo construimos.
             Envio envio = new Envio();
             envio.setId(idEnvio);
-            envio.setTracking(rs.getString("envio_tracking")); // ¡Usa el alias!
-            envio.setCosto(rs.getDouble("envio_costo"));       // ¡Usa el alias!
+            envio.setTracking(rs.getString("envio_tracking"));
+            envio.setCosto(rs.getDouble("envio_costo"));
 
             // Asumiendo que 'fecha_despacho' y 'fecha_estimada' pueden ser nulas
             if (rs.getDate("envio_fecha_despacho") != null) {
@@ -429,6 +428,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
             envio.setEmpresa(EmpresaEnvio.fromId(rs.getInt("envio_id_empresa")));
             envio.setTipo(TipoEnvio.fromId(rs.getInt("envio_id_tipo")));
             envio.setEstado(EstadoEnvio.fromId(rs.getInt("envio_id_estado")));
+            envio.setEliminado(rs.getBoolean("eliminado"));
 
             // Finalmente, asociamos el envío al pedido
             pedido.setEnvio(envio);

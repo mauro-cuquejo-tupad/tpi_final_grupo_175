@@ -200,8 +200,9 @@ public class PedidoConsoleController {
         } else if(pedido.getEstado() == EstadoPedido.ENVIADO) {
             System.out.println("❌ No se puede eliminar un pedido que ya ha sido enviado.");
             return;
-        } else if (pedido.getEnvio() != null && !pedido.getEliminado()) {
-            System.out.println("❌ El pedido tiene un envío asociado. Elimine primero el pedido.");
+        } else if (pedido.getEnvio() != null && !pedido.getEnvio().getEliminado()) {
+            System.out.println("❌ El pedido tiene un envío asociado. Elimine primero el envío: "
+                    + pedido.getEnvio().getTracking());
             return;
         }
 
