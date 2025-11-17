@@ -1,5 +1,6 @@
 package gestorenvios.ui.console.controllers;
 
+import gestorenvios.entities.EstadoPedido;
 import gestorenvios.entities.Pedido;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
@@ -73,29 +74,25 @@ public class PedidoConsoleController {
         }
     }
 
-    public Pedido buscarPorTracking() {
+    public void buscarPorTracking() {
         System.out.println("\n--- BUSCAR PEDIDO POR TRACKING ---");
         try {
             String tracking = input.prompt("Ingrese código de tracking: ");
             Pedido p = pedidoService.buscarPorNumeroTracking(tracking);
             PedidoPrinter.mostrarResumen(p);
-            return p;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
-            return null;
         }
     }
 
-    public Pedido buscarPorId() {
+    public void buscarPorId() {
         System.out.println("\n--- BUSCAR PEDIDO POR ID ---");
         try {
             Long id = input.leerLong("Ingrese ID de pedido: ");
             Pedido p = pedidoService.buscarPorId(id);
             PedidoPrinter.mostrarResumen(p);
-            return p;
         } catch (Exception e) {
             System.out.println("❌ Error al buscar por ID: " + e.getMessage());
-            return null;
         }
     }
 
@@ -130,33 +127,16 @@ public class PedidoConsoleController {
         try {
             String numero = input.leerNumeroPedido("Ingrese Numero del pedido a eliminar (PED-XXXXXXXX): ");
 
-            // Llamada al Service (Soft Delete)
-            pedidoService.eliminarPorNumero(numero);
+            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
+            eliminar(pedido);
+            if (pedido == null) {
+                return;
+            }
 
             System.out.println("✅ Pedido eliminado correctamente.");
 
         } catch (Exception e) {
             System.out.println("❌ Error al eliminar: " + e.getMessage());
-        }
-    }
-
-    public void eliminarEnvioDePedido() {
-        System.out.println("\n--- ELIMINAR ENVIO DE PEDIDO ---");
-        try {
-            String numero = input.leerNumeroPedido("Ingrese Numero del pedido para eliminar su envío (PED-XXXXXXXX): ");
-
-            // Llamada al Service (Soft Delete)
-            Pedido pedido = pedidoService.buscarPorNumeroPedido(numero);
-            if (pedido == null) {
-                System.out.println("❌ Pedido no encontrado.");
-                return;
-            }
-            pedidoService.eliminarEnvioDePedido(pedido.getId());
-
-            System.out.println("✅ Envío eliminado del pedido correctamente.");
-
-        } catch (Exception e) {
-            System.out.println("❌ Error al eliminar el envío del pedido: " + e.getMessage());
         }
     }
 
@@ -165,13 +145,42 @@ public class PedidoConsoleController {
         try {
             Long id = input.leerLong("Ingrese ID del pedido a eliminar: ");
 
-            // Llamada al Service (Soft Delete)
-            pedidoService.eliminar(id);
-
+            Pedido pedido = pedidoService.buscarPorId(id);
+            eliminar(pedido);
+            if (pedido == null) {
+                return;
+            }
             System.out.println("✅ Pedido eliminado correctamente.");
 
         } catch (Exception e) {
             System.out.println("❌ Error al eliminar: " + e.getMessage());
+        }
+    }
+
+    private void eliminar(Pedido pedido) {
+        if (pedido == null) {
+            System.out.println("❌ El pedido no existe.");
+            return;
+        } else if(pedido.getEstado() == EstadoPedido.ENVIADO) {
+            System.out.println("❌ No se puede eliminar un pedido que ya ha sido enviado.");
+            return;
+        } else if (pedido.getEnvio() != null) {
+            System.out.println("❌ El pedido tiene un envío asociado. Elimine primero el pedido.");
+            return;
+        }
+
+        System.out.print("¿Está seguro que desea eliminar el pedido " + pedido.getNumero() + "? (s/n): ");
+        if (input.nextLine().trim().equalsIgnoreCase("s")) {
+
+            try {
+                // Llamada real al Service
+                pedidoService.eliminar(pedido);
+                System.out.println("✅ Pedido eliminado.");
+            } catch (Exception e) {
+                System.out.println("❌ Error al eliminar pedido: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Operación cancelada.");
         }
     }
 }

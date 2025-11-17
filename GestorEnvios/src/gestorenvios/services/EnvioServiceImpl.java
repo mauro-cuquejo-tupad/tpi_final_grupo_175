@@ -107,11 +107,18 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     }
 
     @Override
-    public void eliminar(Long id) throws EliminacionEntityException {
-        try {
-            envioDAO.eliminarLogico(id);
+    public void eliminar(Envio envio) throws EliminacionEntityException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
+
+            transactionManager.startTransaction();
+            envioDAO.eliminarLogicoTx(envio.getId(), conn);
+            Pedido pedido = pedidosService.buscarPorNumeroTracking(envio.getTracking());
+            pedido.setEstado(EstadoPedido.NUEVO);
+            pedidosService.actualizarTx(pedido, conn);
+            transactionManager.commit();
         } catch (Exception e) {
-            throw new EliminacionEntityException("Error al eliminar el envío: " + e.getMessage());
+            throw new CreacionEntityException("Error al eliminar envío: " + e.getMessage());
         }
     }
 

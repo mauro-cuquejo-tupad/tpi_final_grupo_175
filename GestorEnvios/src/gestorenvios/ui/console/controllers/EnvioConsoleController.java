@@ -155,27 +155,6 @@ public class EnvioConsoleController {
             System.out.println("✅ Envío actualizado de Tracking " + envio.getTracking() + " actualizado correctamente.");
         } catch (Exception e) {
             System.out.println("❌ Error al buscar envío por Tracking: " + e.getMessage());
-            return;
-        }
-    }
-
-    private void actualizarEstadoEnvio(Envio envio) {
-        if (envio == null) {
-            System.out.println("❌ Envío no encontrado.");
-            return;
-        } else if (envio.getEstado().equals(EstadoEnvio.ENTREGADO)) {
-            System.out.println("⚠ El envío ya está en estado ENTREGADO y no puede ser modificado.");
-            return;
-        }
-
-        EstadoEnvio nuevoEstado = elegirEstadoEnvio();
-        if (nuevoEstado.equals(EstadoEnvio.ENTREGADO)) {
-            envio.setEstado(nuevoEstado);
-            Pedido pedido = pedidoService.buscarPorNumeroTracking(envio.getTracking());
-            envioService.actualizarEstado(envio, pedido);
-        } else {
-            envio.setEstado(nuevoEstado);
-            envioService.actualizar(envio);
         }
     }
 
@@ -221,6 +200,28 @@ public class EnvioConsoleController {
         }
     }
 
+    private void actualizarEstadoEnvio(Envio envio) {
+        if (envio == null) {
+            System.out.println("❌ Envío no encontrado.");
+            return;
+        } else if (envio.getEstado().equals(EstadoEnvio.ENTREGADO)) {
+            System.out.println("⚠ El envío ya está en estado ENTREGADO y no puede ser modificado.");
+            return;
+        }
+
+        EstadoEnvio nuevoEstado = elegirEstadoEnvio();
+        if (nuevoEstado.equals(EstadoEnvio.ENTREGADO)) {
+            envio.setEstado(nuevoEstado);
+            Pedido pedido = pedidoService.buscarPorNumeroTracking(envio.getTracking());
+            envioService.actualizarEstado(envio, pedido);
+        } else {
+            envio.setEstado(nuevoEstado);
+            envioService.actualizar(envio);
+        }
+    }
+
+    //Eliminar envíos
+
     public void eliminarEnvioPorTracking() {
         System.out.println("\n--- ELIMINAR ENVÍO POR TRACKING ---");
         System.out.println("⚠ PRECAUCIÓN: Esto eliminará el envío aunque tenga un pedido asociado.");
@@ -260,6 +261,9 @@ public class EnvioConsoleController {
         if (envio == null) {
             System.out.println("❌ El envío no existe.");
             return;
+        } else if (envio.getEstado() == EstadoEnvio.ENTREGADO) {
+            System.out.println("❌ No se puede eliminar un envío que ya ha sido entregado.");
+            return;
         }
 
         System.out.print("¿Está seguro que desea eliminar el envío " + envio.getTracking() + "? (s/n): ");
@@ -267,7 +271,7 @@ public class EnvioConsoleController {
 
             try {
                 // Llamada real al Service
-                envioService.eliminar(envio.getId());
+                envioService.eliminar(envio);
                 System.out.println("✅ Envío eliminado.");
             } catch (Exception e) {
                 System.out.println("❌ Error al eliminar envío: " + e.getMessage());

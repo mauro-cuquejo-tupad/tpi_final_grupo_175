@@ -2,14 +2,11 @@ package gestorenvios.services;
 
 import gestorenvios.models.exceptions.ActualizacionEntityException;
 import gestorenvios.models.exceptions.ConsultaEntityException;
-import gestorenvios.models.exceptions.EliminacionEntityException;
 
 import java.sql.Connection;
 import java.util.List;
 
 public interface GenericPedidosService<T> extends GenericService<T> {
-    void eliminarEnvioDePedido(Long idPedido) throws EliminacionEntityException;
-
     void actualizarTx(T pedido, Connection conn) throws ActualizacionEntityException;
 
     T buscarPorNumeroPedido(String numero) throws ConsultaEntityException;
@@ -21,8 +18,4 @@ public interface GenericPedidosService<T> extends GenericService<T> {
     Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException;
 
     Long obtenerCantidadTotalDePedidosPorCliente(String clienteNombre);
-
-    void eliminarPorNumero(String numero) throws EliminacionEntityException;
-
-
 }

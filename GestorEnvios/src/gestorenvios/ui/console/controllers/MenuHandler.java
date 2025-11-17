@@ -41,11 +41,6 @@ public class MenuHandler {
     public void eliminarPedidoPorNumero() {
         pedidoConsoleController.eliminarPedidoPorNumero();
     }
-
-    public void eliminarEnvioDePedido() {
-        pedidoConsoleController.eliminarEnvioDePedido();
-    }
-
     public void eliminarPedidoPorId() {
         pedidoConsoleController.eliminarPedidoPorId();
     }

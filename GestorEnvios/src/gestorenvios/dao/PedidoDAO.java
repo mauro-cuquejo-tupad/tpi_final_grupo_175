@@ -34,17 +34,10 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     private static final String UPDATE_SQL = "UPDATE Pedido SET numero = ?, fecha = ?, cliente_nombre = ?, total = ?, id_estado_pedido = ?, id_envio = ? WHERE id = ?";
 
     /**
-     * Query para desvincular envio de un pedido
-     */
-    private static final String DESVINCULAR_ENVIO_SQL = "UPDATE Pedido SET id_envio = NULL WHERE id = ?";
-
-
-    /**
      * Query de soft delete. Marca eliminado = TRUE sin borrar físicamente la
      * fila. Preserva integridad referencial y datos históricos.
      */
     private static final String DELETE_SQL = "UPDATE Pedido SET eliminado = TRUE WHERE id = ?";
-    private static final String DELETE_SQL_POR_NUMERO = "UPDATE Pedido SET eliminado = TRUE WHERE numero = ?";
 
     /**
      * Query para obtener pedido por ID. LEFT JOIN con envio para cargar la
@@ -215,59 +208,6 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
             if (rowsAffected == 0) {
                 throw new SQLException("No se encontró pedido (Tx) con ID: " + id + ".");
-            }
-        }
-    }
-
-    /**
-     * Elimina lógicamente un pedido (soft delete). Marca eliminado=TRUE sin
-     * borrar físicamente la fila.
-     * <p>
-     * Validaciones: - Si rowsAffected == 0 → El pedido no existe o ya está
-     * eliminado
-     * <p>
-     * IMPORTANTE: NO elimina el envío asociado.
-     *
-     * @param numero numero del pedido a eliminar
-     * @throws SQLException Si el pedido no existe o hay error de BD
-     */
-    public void eliminarLogicoPorNumero(String numero) throws SQLException {
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL_POR_NUMERO)) {
-
-            pstmt.setString(1, numero);
-
-            // Ejecutamos el UPDATE
-            int rowsAffected = pstmt.executeUpdate();
-
-            // Si no se actualizó ninguna fila, es que no se encontró el ID
-            if (rowsAffected == 0) {
-                throw new SQLException("No se encontró pedido con Numero: " + numero + " (o ya estaba eliminado).");
-            }
-        } catch (SQLException e) {
-            // Captura y relanza cualquier error de SQL
-            throw new SQLException("Error al eliminar lógicamente el pedido: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Método especial para transacciones: Desvincula un envío de un pedido
-     * (SET id_envio = NULL) usando conexión externa.
-     *
-     * @param pedidoId El ID del pedido a modificar.
-     * @param conn     La conexión transaccional.
-     * @throws SQLException Si falla el UPDATE.
-     */
-    public void desvincularEnvioTx(long pedidoId, Connection conn) throws SQLException {
-        try (PreparedStatement pstmt = conn.prepareStatement(DESVINCULAR_ENVIO_SQL)) {
-            pstmt.setLong(1, pedidoId);
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected == 0) {
-                // esto puede pasar si el pedido no existe, lo cual no debería
-                // fallar la transacción si la lógica es "asegurar que esté desvinculado".
-                // Pero por consistencia, lanzamos error si no encontró el pedido.
-                throw new SQLException("No se encontró el pedido ID: " + pedidoId + " para desvincular.");
             }
         }
     }

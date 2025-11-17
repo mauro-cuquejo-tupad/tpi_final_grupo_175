@@ -1,8 +1,6 @@
 package gestorenvios.services;
 
 import com.mysql.cj.util.StringUtils;
-import gestorenvios.config.DatabaseConnection;
-import gestorenvios.config.TransactionManager;
 import gestorenvios.dao.PedidoDAO;
 import gestorenvios.entities.Pedido;
 import gestorenvios.models.exceptions.ActualizacionEntityException;
@@ -120,9 +118,9 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
-    public void eliminar(Long id) throws EliminacionEntityException {
+    public void eliminar(Pedido pedido) throws EliminacionEntityException {
         try {
-            pedidoDAO.eliminarLogico(id);
+            pedidoDAO.eliminarLogico(pedido.getId());
         } catch (Exception e) {
             throw new EliminacionEntityException("Error al eliminar el pedido: " + e.getMessage());
         }
@@ -143,29 +141,6 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
             return pedidoDAO.obtenerCantidadTotalDePedidosPorNombre(clienteNombre);
         } catch (SQLException e) {
             throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void eliminarPorNumero(String numero) throws EliminacionEntityException {
-        try {
-            pedidoDAO.eliminarLogicoPorNumero(numero);
-        } catch (Exception e) {
-            throw new EliminacionEntityException("Error al eliminar el pedido por número: " + e.getMessage());
-        }
-
-    }
-
-    @Override
-    public void eliminarEnvioDePedido(Long idPedido) throws EliminacionEntityException {
-        try (Connection conn = DatabaseConnection.getConnection();
-             TransactionManager transactionManager = new TransactionManager(conn)) {
-
-            transactionManager.startTransaction();
-            pedidoDAO.desvincularEnvioTx(idPedido, conn);
-            transactionManager.commit();
-        } catch (Exception e) {
-            throw new EliminacionEntityException("Error al eliminar el envío del pedido: " + e.getMessage());
         }
     }
 }

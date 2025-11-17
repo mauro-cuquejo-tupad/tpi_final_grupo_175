@@ -13,7 +13,11 @@ public class PedidoPrinter {
             System.out.println("❌ No se encontró el pedido.");
             return;
         }
-        System.out.println("ID: " + p.getId() + " | Cliente: " + p.getClienteNombre() + " | Nº: " + p.getNumero());
+        System.out.println("ID: " + p.getId()
+                + " | Cliente: "
+                + p.getClienteNombre()
+                + " | Nº: " + p.getNumero()
+                + " | Estado: " + p.getEstado());
         if (p.getEnvio() != null) {
             System.out.println("Envío: " + p.getEnvio().getTracking() + " | Estado envío: " + p.getEnvio().getEstado());
         } else {

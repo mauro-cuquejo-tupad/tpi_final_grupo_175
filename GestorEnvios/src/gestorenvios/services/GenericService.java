@@ -16,5 +16,5 @@ public interface GenericService<T> {
 
     void actualizar(T entity) throws ActualizacionEntityException;
 
-    void eliminar(Long id) throws EliminacionEntityException;
+    void eliminar(T entity) throws EliminacionEntityException;
 }
