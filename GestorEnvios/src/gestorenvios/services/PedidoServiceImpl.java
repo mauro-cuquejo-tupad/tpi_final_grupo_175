@@ -116,6 +116,24 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     }
 
     @Override
+    public Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException {
+        try {
+            return pedidoDAO.obtenerCantidadTotalDePedidos();
+        } catch (SQLException e) {
+            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Long obtenerCantidadTotalDePedidosPorCliente(String clienteNombre) {
+        try {
+            return pedidoDAO.obtenerCantidadTotalDePedidosPorNombre(clienteNombre);
+        } catch (SQLException e) {
+            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void actualizarTx(Pedido pedido, Connection conn) throws ActualizacionEntityException {
         try {
             pedidoDAO.actualizarTx(pedido, conn);
@@ -135,28 +153,26 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
 
     @Override
     public void eliminar(Pedido pedido) throws EliminacionEntityException {
-        try {
-            pedidoDAO.eliminarLogico(pedido.getId());
+        try (Connection conn = DatabaseConnection.getConnection();
+             TransactionManager transactionManager = new TransactionManager(conn)) {
+            eliminarTx(pedido, transactionManager, conn);
         } catch (Exception e) {
             throw new EliminacionEntityException("Error al eliminar el pedido: " + e.getMessage());
         }
     }
 
-    @Override
-    public Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException {
+    private void eliminarTx(Pedido pedido,
+                            TransactionManager transactionManager,
+                            Connection conn) {
         try {
-            return pedidoDAO.obtenerCantidadTotalDePedidos();
-        } catch (SQLException e) {
-            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Long obtenerCantidadTotalDePedidosPorCliente(String clienteNombre) {
-        try {
-            return pedidoDAO.obtenerCantidadTotalDePedidosPorNombre(clienteNombre);
-        } catch (SQLException e) {
-            throw new ConsultaEntityException("Error al obtener la cantidad total de pedidos: " + e.getMessage());
+            transactionManager.startTransaction();
+            String numeroPedido = generarNuevoNumeroPedidoTx(conn);
+            pedido.setNumero(numeroPedido);
+            pedidoDAO.eliminarLogicoTx(pedido.getId(), conn);
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new EliminacionEntityException(e.getMessage());
         }
     }
 }

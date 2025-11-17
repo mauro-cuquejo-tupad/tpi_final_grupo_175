@@ -7,7 +7,7 @@ import java.sql.Connection;
 import java.util.List;
 
 public interface GenericPedidosService<T> extends GenericService<T> {
-    void actualizarTx(T pedido, Connection conn) throws ActualizacionEntityException;
+    void actualizarTx(T entity, Connection conn) throws ActualizacionEntityException;
 
     T buscarPorNumeroPedido(String numero) throws ConsultaEntityException;
 
