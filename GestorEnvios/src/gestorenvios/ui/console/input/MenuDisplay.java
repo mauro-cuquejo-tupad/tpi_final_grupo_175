@@ -1,5 +1,7 @@
 package gestorenvios.ui.console.input;
 
+import gestorenvios.ui.console.utils.ConsoleUtils;
+
 public class MenuDisplay {
 
     private MenuDisplay() {
@@ -35,6 +37,7 @@ public class MenuDisplay {
      * AppMenu.processOption().
      */
     public static void mostrarMenuPrincipal() {
+        ConsoleUtils.clearScreen();
         System.out.println();
         System.out.println("=== GESTOR DE ENVIOS ===");
         System.out.println("=== MENU ===");

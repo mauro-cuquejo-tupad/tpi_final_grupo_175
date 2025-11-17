@@ -12,6 +12,7 @@ import gestorenvios.ui.console.controllers.MenuHandler;
 import gestorenvios.ui.console.input.ConsoleInputReader;
 import gestorenvios.ui.console.input.InputReader;
 import gestorenvios.ui.console.input.MenuDisplay;
+import gestorenvios.ui.console.output.PantallaBienvenida;
 
 import java.util.Scanner;
 
@@ -33,6 +34,8 @@ public class AppMenu {
      * usuario selecciona "0 - Salir".
      */
     private boolean running;
+
+    private boolean conexionExitosa;
 
     /**
      * Constructor que inicializa la aplicación.
@@ -60,6 +63,7 @@ public class AppMenu {
 
         this.menuHandler = new MenuHandler(pedidoService, enviosService, input);
         this.running = true;
+        this.conexionExitosa = PantallaBienvenida.mostrar(input);
     }
 
     private GenericEnviosService<Envio, Pedido> crearEnvioService(GenericPedidosService<Pedido> pedidoService) {
@@ -96,6 +100,11 @@ public class AppMenu {
      * Scanner(System.in) cierra System.in para toda la aplicación.
      */
     public void run() {
+        if (!conexionExitosa) {
+            System.out.println("Saliendo...");
+            return;
+        }
+
         while (running) {
             try {
                 MenuDisplay.mostrarMenuPrincipal();
