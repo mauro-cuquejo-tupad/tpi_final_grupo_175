@@ -37,6 +37,7 @@ public class MenuDisplay {
      * AppMenu.processOption().
      */
     public static void mostrarMenuPrincipal() {
+        ConsoleUtils.enterParaContinuar();
         ConsoleUtils.clearScreen();
         System.out.println();
         System.out.println("=== GESTOR DE ENVIOS ===");
