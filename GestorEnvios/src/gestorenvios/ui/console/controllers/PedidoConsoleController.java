@@ -168,7 +168,7 @@ public class PedidoConsoleController {
 
     //ELIMINAR PEDIDOS
     public void eliminarPedidoPorNumero() {
-        System.out.println("\n--- ELIMINAR PEDIDO ---");
+        System.out.println("\n--- ELIMINAR PEDIDO POR NUMERO ---");
         try {
             String numeroPedido = input.leerNumeroPedido(
                     "Ingrese Numero del pedido a eliminar (PED-XXXXXXXX) o 'q' para salir: ");
@@ -179,17 +179,17 @@ public class PedidoConsoleController {
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             eliminar(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al eliminar: " + e.getMessage());
+            System.out.println("❌ Error al eliminar por Número: " + e.getMessage());
         }
     }
 
     public void eliminarPedidoPorId() {
-        System.out.println("\n--- ELIMINAR PEDIDO ---");
+        System.out.println("\n--- ELIMINAR PEDIDO POR ID---");
         try {
             Pedido pedido = pedidoService.buscarPorId(input.leerLong("Ingrese ID del pedido a eliminar: "));
             eliminar(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al eliminar: " + e.getMessage());
+            System.out.println("❌ Error al eliminar por ID: " + e.getMessage());
         }
     }
 
