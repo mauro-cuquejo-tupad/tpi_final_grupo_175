@@ -11,76 +11,95 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object para la entidad Envíos. Gestiona todas las operaciones de
- * persistencia de envios en la base de datos.
+ * DAO para gestionar la persistencia de envíos en la base de datos.
  *
+ * <p>Implementa operaciones CRUD y consultas especializadas sobre la tabla Envio,
+ * incluyendo búsqueda por tracking y número de pedido asociado. Todas las operaciones
+ * respetan el soft delete filtrando registros eliminados.</p>
+ *
+ * @author Grupo 175
+ * @version 1.0
+ * @since 2025-01-17
+ * @see Envio
+ * @see GenericDAO
  */
 public class EnvioDAO implements GenericDAO<Envio> {
 
+    /** Campos estándar seleccionados en las consultas de envío. */
     private static final String CAMPOS_ENVIO = " e.id, e.eliminado, e.tracking, e.id_empresa, e.id_tipo_envio, e.costo,"
             + " e.fecha_despacho, e.fecha_estimada, e.id_estado_envio";
 
+    /** Query base para SELECT de envíos. */
     private static final String QUERY_BASE = "SELECT" + CAMPOS_ENVIO + " FROM Envio e";
 
+    /** Query para contar envíos activos (no eliminados). */
     private static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
 
-    /* Query de inserción. */
+    /** Query para insertar un nuevo envío. */
     private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    /* Query de actualización. */
+    /** Query para actualizar un envío existente por ID. */
     private static final String UPDATE_SQL = "UPDATE Envio SET tracking = ?, id_empresa = ?, id_tipo_envio = ?, costo = ?, fecha_despacho = ?, fecha_estimada = ?, id_estado_envio = ? WHERE id = ?";
 
-    /* Query de soft delete. */
+    /** Query para eliminación lógica de un envío. */
     private static final String DELETE_SQL = "UPDATE Envio SET eliminado = TRUE WHERE id = ?";
 
-    /* Query SELECT ALL */
+    /** Query para listar envíos activos con paginación. */
     private static final String SELECT_ALL_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE"
             + " LIMIT ? OFFSET ?";
 
-    /* Query SELECT por ID */
+    /** Query para buscar un envío activo por ID. */
     private static final String SELECT_BY_ID_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE AND e.id = ?";
 
+    /** Query para buscar un envío activo por código de tracking. */
     private static final String SELECT_BY_TRACKING_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE AND e.tracking = ?";
 
+    /** Query para buscar un envío por número de pedido asociado. Incluye JOIN con tabla Pedido. */
     private static final String SELECT_BY_NUMERO_SQL = QUERY_BASE
             + " LEFT JOIN Pedido p  ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE"
-            + " AND e.eliminado = FALSE" //trae los envios no eliminados a partir de pedidos no eliminados
+            + " AND e.eliminado = FALSE"
             + " AND p.numero = ?";
 
     /**
-     * Inserta un envío dentro de una transacción externa. Es vital para cuando
-     * PedidosDAO guarda el pedido y necesita guardar el envío al mismo tiempo.
+     * Inserta un envío dentro de una transacción externa.
+     * No gestiona la conexión, debe ser proporcionada por el invocador.
      *
-     * @param envio El envío a insertar
-     * @param conn  La conexión activa con la base de datos
-     * @throws SQLException Si ocurre un error durante la inserción
+     * @param envio Envío a insertar
+     * @param conn Conexión activa de base de datos
+     * @throws SQLException si ocurre un error durante la inserción
      */
     @Override
     public void insertarTx(Envio envio, Connection conn) throws SQLException {
         try {
             PreparedStatement pstmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS);
             setEnvioParameters(pstmt, envio);
-            pstmt.setBoolean(1, false);       // forzamos eliminado = false
+            pstmt.setBoolean(1, false);
 
             pstmt.executeUpdate();
 
-            setGeneratedId(pstmt, envio);     // recuperar ID
+            setGeneratedId(pstmt, envio);
 
         } catch (SQLException e) {
             throw new SQLException("Error al insertar el envío: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Actualiza un envío existente dentro de una transacción externa.
+     * No gestiona la conexión ni el commit/rollback.
+     *
+     * @param envio Envío con datos actualizados
+     * @param conn Conexión activa de base de datos
+     * @throws SQLException si el envío no existe o hay error en la actualización
+     */
     @Override
     public void actualizarTx(Envio envio, Connection conn) throws SQLException {
-        // NO abre ni cierra la conexión, usa la "conn" recibida
         try (PreparedStatement pstmt = conn.prepareStatement(UPDATE_SQL)) {
 
-            // parámetros
             pstmt.setString(1, envio.getTracking());
             pstmt.setInt(2, envio.getEmpresa().getId());
             pstmt.setInt(3, envio.getTipo().getId());
@@ -99,7 +118,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
             }
 
             pstmt.setInt(7, envio.getEstado().getId());
-            pstmt.setLong(8, envio.getId()); // ID para el WHERE
+            pstmt.setLong(8, envio.getId());
 
             int rowsAffected = pstmt.executeUpdate();
 
@@ -109,6 +128,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
+    /**
+     * Realiza eliminación lógica de un envío dentro de una transacción externa.
+     *
+     * @param id ID del envío a eliminar
+     * @param conn Conexión activa de base de datos
+     * @throws SQLException si el envío no existe
+     */
     @Override
     public void eliminarLogicoTx(Long id, Connection conn) throws SQLException {
         try (PreparedStatement pstmt = conn.prepareStatement(DELETE_SQL)) {
@@ -119,6 +145,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
+    /**
+     * Busca un envío activo por su ID.
+     *
+     * @param id ID del envío a buscar
+     * @return Envío encontrado o null si no existe
+     * @throws SQLException si ocurre un error en la consulta
+     */
     @Override
     public Envio buscarPorId(Long id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
@@ -126,7 +159,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapEnvio(rs);
+                    return toEnvio(rs);
                 }
             }
         } catch (SQLException e) {
@@ -135,6 +168,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
+    /**
+     * Busca un envío activo por su código de tracking único.
+     *
+     * @param tracking Código de tracking del envío
+     * @return Envío encontrado o null si no existe
+     * @throws SQLException si ocurre un error en la consulta
+     */
     public Envio buscarPorTracking(String tracking) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_TRACKING_SQL)) {
@@ -143,7 +183,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapEnvio(rs);
+                    return toEnvio(rs);
                 }
             }
         } catch (SQLException e) {
@@ -152,6 +192,14 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
+    /**
+     * Busca un envío por el número del pedido asociado.
+     * Realiza JOIN con la tabla Pedido.
+     *
+     * @param numero Número del pedido
+     * @return Envío encontrado o null si no existe
+     * @throws SQLException si ocurre un error en la consulta
+     */
     public Envio buscarPorNumeroPedido(String numero) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_BY_NUMERO_SQL)) {
@@ -160,7 +208,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapEnvio(rs);
+                    return toEnvio(rs);
                 }
             }
         } catch (SQLException e) {
@@ -169,6 +217,14 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
+    /**
+     * Lista todos los envíos activos con paginación.
+     *
+     * @param cantidad Número de registros por página
+     * @param pagina Número de página (base 1)
+     * @return Lista de envíos de la página solicitada
+     * @throws SQLException si ocurre un error en la consulta
+     */
     @Override
     public List<Envio> buscarTodos(Long cantidad, Long pagina) throws SQLException {
         List<Envio> envios = new ArrayList<>();
@@ -176,20 +232,16 @@ public class EnvioDAO implements GenericDAO<Envio> {
         long registrosPorPagina = (cantidad != null && cantidad > 0L) ? cantidad : 50L;
         long numeroPagina = (pagina != null && pagina > 0L) ? pagina : 1L;
 
-        // Calcular el OFFSET (registros a saltar)
         long offset = (numeroPagina - 1L) * registrosPorPagina;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL)) {
-            // Seteamos los parámetros LIMIT y OFFSET
-            pstmt.setLong(1, registrosPorPagina); // LIMIT
-            pstmt.setLong(2, offset);              // OFFSET
+            pstmt.setLong(1, registrosPorPagina);
+            pstmt.setLong(2, offset);
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                // Itera sobre CADA fila del resultado
                 while (rs.next()) {
-                    // Reutilizamos el mismo "mapPedido" para construir el objeto
-                    envios.add(mapEnvio(rs));
+                    envios.add(toEnvio(rs));
                 }
             }
         } catch (SQLException e) {
@@ -198,11 +250,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envios;
     }
 
-    // OTROS
-
     /**
-     * Setea los parámetros para el INSERT. El parámetro "eliminado" se setea
-     * manualmente en el método insert/insertTx. desde el índice 2 en adelante.
+     * Setea los parámetros del PreparedStatement para INSERT.
+     * El parámetro eliminado (índice 1) debe setearse manualmente antes de llamar este método.
+     *
+     * @param pstmt PreparedStatement a configurar
+     * @param envio Envío con los datos a insertar
+     * @throws SQLException si hay error al setear parámetros
      */
     private void setEnvioParameters(PreparedStatement pstmt, Envio envio) throws SQLException {
 
@@ -227,6 +281,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         pstmt.setInt(8, envio.getEstado().getId());
     }
 
+    /**
+     * Recupera el ID generado automáticamente y lo asigna al envío.
+     *
+     * @param pstmt PreparedStatement que ejecutó el INSERT
+     * @param envio Envío al que se le asignará el ID generado
+     * @throws SQLException si no se puede obtener el ID generado
+     */
     private void setGeneratedId(PreparedStatement pstmt, Envio envio) throws SQLException {
         try (ResultSet rs = pstmt.getGeneratedKeys()) {
             if (rs.next()) {
@@ -235,7 +296,15 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    private Envio mapEnvio(ResultSet resultSet) throws SQLException {
+    /**
+     * Mapea un registro del ResultSet a un objeto Envio.
+     * Convierte los IDs de la base de datos a enums de Java usando fromId.
+     *
+     * @param resultSet ResultSet posicionado en el registro a mapear
+     * @return Envío construido con los datos del registro
+     * @throws SQLException si ocurre un error al leer el ResultSet
+     */
+    private Envio toEnvio(ResultSet resultSet) throws SQLException {
         Envio envio = new Envio();
 
         envio.setId(resultSet.getLong("id"));
@@ -250,7 +319,6 @@ public class EnvioDAO implements GenericDAO<Envio> {
             envio.setFechaEstimada(resultSet.getDate("fecha_estimada").toLocalDate());
         }
 
-        // Mapeo de ID (BD) a Enum (Java) usando método 'fromId'
         envio.setEmpresa(EmpresaEnvio.fromId(resultSet.getInt("id_empresa")));
         envio.setTipo(TipoEnvio.fromId(resultSet.getInt("id_tipo_envio")));
         envio.setEstado(EstadoEnvio.fromId(resultSet.getInt("id_estado_envio")));
@@ -258,6 +326,12 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envio;
     }
 
+    /**
+     * Obtiene el total de envíos activos (no eliminados) en la base de datos.
+     *
+     * @return Cantidad total de envíos
+     * @throws SQLException si ocurre un error en la consulta
+     */
     public Long obtenerCantidadTotalDeEnvios() throws SQLException {
         long total = 0L;
 
