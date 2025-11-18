@@ -1,5 +1,6 @@
-// java
 package gestorenvios.ui.console.input;
+
+import gestorenvios.ui.console.utils.ConsoleUtils;
 
 import java.util.Scanner;
 
@@ -17,18 +18,30 @@ public class ConsoleInputReader implements InputReader {
 
     @Override
     public String prompt(String mensaje) {
-        System.out.print(mensaje);
+        ConsoleUtils.imprimirInfo(mensaje);
         return scanner.nextLine().trim();
+    }
+
+    @Override
+    public String leerStringObligatorio(String mensaje, String param) {
+        while (true) {
+            ConsoleUtils.imprimirInfo(mensaje);
+            String valorIngresado = scanner.nextLine().trim();
+            if (!valorIngresado.isEmpty()) {
+                return valorIngresado;
+            }
+            ConsoleUtils.imprimirError("Error: " + param + " no puede estar vacío.");
+        }
     }
 
     @Override
     public double leerDouble(String mensaje) {
         while (true) {
             try {
-                System.out.print(mensaje);
+                ConsoleUtils.imprimirInfo(mensaje);
                 return Double.parseDouble(scanner.nextLine().trim());
             } catch (NumberFormatException _) {
-                System.out.println("Error: Ingrese un monto válido.");
+                ConsoleUtils.imprimirError("Error: Ingrese un monto válido.");
             }
         }
     }
@@ -37,10 +50,10 @@ public class ConsoleInputReader implements InputReader {
     public Long leerLong(String mensaje) {
         while (true) {
             try {
-                System.out.print(mensaje);
+                ConsoleUtils.imprimirInfo(mensaje);
                 return Long.parseLong(scanner.nextLine().trim());
             } catch (NumberFormatException _) {
-                System.out.println("Error: Ingrese un número válido.");
+                ConsoleUtils.imprimirError("Error: Ingrese un número válido.");
             }
         }
     }
@@ -48,17 +61,17 @@ public class ConsoleInputReader implements InputReader {
     @Override
     public String leerNumeroPedido(String mensaje) {
         while (true) {
-            System.out.print(mensaje);
+            ConsoleUtils.imprimirInfo(mensaje);
             String entrada = scanner.nextLine().trim();
             if (entrada.matches("PED-\\d{8}") || entrada.equalsIgnoreCase("q")) return entrada;
-            System.out.println("Error: Formato inválido. Use PED-XXXXXXXX.");
+            ConsoleUtils.imprimirError("Error: Formato inválido. Use PED-XXXXXXXX.");
         }
     }
 
     @Override
     public void mostrarOpcionesEnum(Object[] valores) {
         for (int i = 0; i < valores.length; i++) {
-            System.out.println((i + 1) + ". " + valores[i]);
+            ConsoleUtils.imprimirInfo((i + 1) + ". " + valores[i]);
         }
     }
 
@@ -66,14 +79,14 @@ public class ConsoleInputReader implements InputReader {
     public int leerOpcionEnum(int maxOpcion) {
         while (true) {
             try {
-                System.out.print("Opción: ");
+                ConsoleUtils.imprimirInfo("Opción: ");
                 int opcion = Integer.parseInt(scanner.nextLine().trim());
                 if (opcion >= 1 && opcion <= maxOpcion) {
                     return opcion;
                 }
-                System.out.println("Opción fuera de rango.");
+                ConsoleUtils.imprimirError("Opción fuera de rango.");
             } catch (NumberFormatException _) {
-                System.out.println("Error: Ingrese un número válido.");
+                ConsoleUtils.imprimirError("Error: Ingrese un número válido.");
             }
         }
     }

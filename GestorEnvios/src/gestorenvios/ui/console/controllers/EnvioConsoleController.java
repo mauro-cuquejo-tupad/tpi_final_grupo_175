@@ -5,6 +5,7 @@ import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
 import gestorenvios.ui.console.output.EnvioPrinter;
+import gestorenvios.ui.console.utils.ConsoleUtils;
 import gestorenvios.ui.console.utils.Paginador;
 
 import java.time.LocalDate;
@@ -27,7 +28,7 @@ public class EnvioConsoleController {
     }
 
     public void crear() {
-        System.out.println("\n--- CREAR ENVÍO POR NUMERO PEDIDO ---");
+        ConsoleUtils.imprimirDivisores("CREAR NUEVO ENVÍO POR NUMERO PEDIDO");
         try {
             Pedido pedido = getPedido();
             if (pedido == null) {
@@ -39,9 +40,9 @@ public class EnvioConsoleController {
             //transaccional para crear envio y actualizar pedido
             String numeroEnvio = envioService.crearEnvioYActualizarPedido(envio, pedido);
 
-            System.out.println("✅ Envío Tracking Nro: " + numeroEnvio + " creado exitosamente.");
+            ConsoleUtils.imprimirMensaje("✅ Envío Tracking Nro: " + numeroEnvio + " creado exitosamente.");
         } catch (Exception e) {
-            System.out.println("❌ Error al crear envío: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al crear envío: " + e.getMessage());
         }
     }
 
@@ -51,14 +52,14 @@ public class EnvioConsoleController {
             String numeroPedido = input.leerNumeroPedido(
                     "Ingrese el Numero del Pedido (PED-XXXXXXXX) al que asignar el envío o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return null;
             }
             pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             if (pedido == null) {
-                System.out.println("❌ El pedido con número " + numeroPedido + " no existe. Intente nuevamente.");
+                ConsoleUtils.imprimirError("❌ El pedido con número " + numeroPedido + " no existe. Intente nuevamente.");
             } else if (pedido.getEnvio() != null) {
-                System.out.println("❌ El pedido con número " + numeroPedido + " ya tiene un envío asignado. Intente nuevamente.");
+                ConsoleUtils.imprimirError("❌ El pedido con número " + numeroPedido + " ya tiene un envío asignado. Intente nuevamente.");
             } else {
                 break;
             }
@@ -67,10 +68,10 @@ public class EnvioConsoleController {
     }
 
     public void listar() {
-        System.out.println("\n--- LISTA DE ENVÍOS ---");
+        ConsoleUtils.imprimirDivisores("LISTA DE ENVÍOS");
         try {
             Long total = envioService.obtenerCantidadTotalDeEnvios();
-            System.out.println("Total de envíos registrados: " + total);
+            ConsoleUtils.imprimirInfo("Total de envíos registrados: " + total);
 
             Paginador<Envio> paginador = new Paginador<>(50L, input);
             paginador.paginar(
@@ -78,71 +79,78 @@ public class EnvioConsoleController {
                         try {
                             return envioService.buscarTodos(pageSize, page);
                         } catch (Exception e) {
-                            System.out.println("❌ Error al obtener envíos: " + e.getMessage());
+                            ConsoleUtils.imprimirError("❌ Error al obtener envíos: " + e.getMessage());
                             return List.of();
                         }
                     },
-                    lista -> lista.forEach(EnvioPrinter::mostrarResumen),
+                    lista -> {
+                        ConsoleUtils.imprimirLineaVacia();
+                        EnvioPrinter.mostrarCabecera();
+                        lista.forEach(EnvioPrinter::mostrarDetalle);
+                    },
                     total
             );
         } catch (Exception e) {
-            System.out.println("❌ Error al listar envíos: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al listar envíos: " + e.getMessage());
         }
     }
 
     public void buscarPorTracking() {
-        System.out.println("\n--- BUSCAR ENVIO POR TRACKING ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR TRACKING");
         try {
-            Envio envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking de pedido: "));
-            EnvioPrinter.mostrarResumen(envio);
+            Envio envio = envioService.buscarPorTracking(input.leerStringObligatorio("Ingrese Tracking de pedido: ", "Tracking"));
+            EnvioPrinter.mostrarCabecera();
+            EnvioPrinter.mostrarDetalle(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por Tracking: " + e.getMessage());
         }
     }
 
     public void buscarPorNumeroPedido() {
-        System.out.println("\n--- BUSCAR ENVIO POR NUMERO PEDIDO ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR NUMERO PEDIDO");
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX) o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Envio envio = envioService.buscarPorNumeroPedido(numeroPedido);
 
-            EnvioPrinter.mostrarResumen(envio);
+            EnvioPrinter.mostrarCabecera();
+            EnvioPrinter.mostrarDetalle(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por Numero Pedido: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por Numero Pedido: " + e.getMessage());
         }
     }
 
     public void buscarPorId() {
-        System.out.println("\n--- BUSCAR ENVIO POR ID ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR ID");
         try {
             Envio envio = envioService.buscarPorId(input.leerLong("Ingrese ID de pedido: "));
-            EnvioPrinter.mostrarResumen(envio);
+            EnvioPrinter.mostrarCabecera();
+            EnvioPrinter.mostrarDetalle(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por ID: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por ID: " + e.getMessage());
         }
     }
 
     public void actualizarEstadoPorTracking() {
-        System.out.println("\n--- ACTUALIZAR ENVÍO (POR TRACKING) ---");
+        ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR TRACKING");
         Envio envio;
         try {
-            envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
+            envio = envioService.buscarPorTracking(input.leerStringObligatorio("Ingrese Tracking del envío a modificar: ", "Tracking"));
             actualizarEstadoEnvio(envio);
             if (envio == null) {
                 return;
             }
-            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
+            ConsoleUtils.imprimirMensaje(String.format(ENVIO_ACTUALIZADO_CORRECTAMENTE, envio.getTracking()));
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar envío por Tracking: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar envío por Tracking: " + e.getMessage());
         }
     }
 
     public void actualizarEstadoEnvioPorId() {
-        System.out.println("\n--- ACTUALIZAR ENVÍO (POR ID) ---");
+        ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR ID");
         Envio envio;
         try {
             envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a modificar: "));
@@ -150,29 +158,29 @@ public class EnvioConsoleController {
             if (envio == null) {
                 return;
             }
-            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
+            ConsoleUtils.imprimirMensaje(String.format(ENVIO_ACTUALIZADO_CORRECTAMENTE, envio.getTracking()));
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar envío por ID: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar envío por ID: " + e.getMessage());
         }
     }
 
     public void actualizarEstadoEnvioPorNumeroPedido() {
-        System.out.println("\n--- ACTUALIZAR ENVÍO DE UN PEDIDO ---");
+        ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR NÚMERO DE PEDIDO");
         Envio envio;
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println(OPERACION_CANCELADA_POR_EL_USUARIO);
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
 
             if (pedido == null) {
-                System.out.println("❌ Pedido no encontrado.");
+                ConsoleUtils.imprimirError("❌ Pedido no encontrado.");
                 return;
             } else if (pedido.getEnvio() == null) {
-                System.out.println("⚠ Este pedido (" + pedido.getNumero() + ") NO tiene envío asociado.");
-                System.out.println("Use la opción 'Actualizar Pedido' para asignarle uno nuevo.");
+                ConsoleUtils.imprimirInfo("⚠ Este pedido (" + pedido.getNumero() + ") NO tiene envío asociado.");
+                ConsoleUtils.imprimirInfo("Use la opción 'Actualizar Pedido' para asignarle uno nuevo.");
                 return;
             }
 
@@ -181,18 +189,18 @@ public class EnvioConsoleController {
             if (envio == null) {
                 return;
             }
-            System.out.printf((ENVIO_ACTUALIZADO_CORRECTAMENTE) + "%n", envio.getTracking());
+            ConsoleUtils.imprimirMensaje(String.format(ENVIO_ACTUALIZADO_CORRECTAMENTE, envio.getTracking()));
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar envío: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar envío: " + e.getMessage());
         }
     }
 
     private void actualizarEstadoEnvio(Envio envio) {
         if (envio == null) {
-            System.out.println("❌ Envío no encontrado.");
+            ConsoleUtils.imprimirError("❌ Envío no encontrado.");
             return;
         } else if (envio.getEstado().equals(EstadoEnvio.ENTREGADO)) {
-            System.out.println("⚠ El envío ya está en estado ENTREGADO y no puede ser modificado.");
+            ConsoleUtils.imprimirError("❌ El envío ya está en estado ENTREGADO y no puede ser modificado.");
             return;
         }
 
@@ -210,67 +218,67 @@ public class EnvioConsoleController {
     //Eliminar envíos
 
     public void eliminarEnvioPorTracking() {
-        System.out.println("\n--- ELIMINAR ENVÍO POR TRACKING ---");
+        ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR TRACKING");
         try {
-            Envio envio = envioService.buscarPorTracking(input.prompt("Ingrese Tracking del envío a modificar: "));
+            Envio envio = envioService.buscarPorTracking(input.leerStringObligatorio("Ingrese Tracking del envío a modificar: ", "Tracking"));
             eliminar(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar envío: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al actualizar envío: " + e.getMessage());
         }
     }
 
     public void eliminarEnvioPorNumeroPedido() {
-        System.out.println("\n--- ELIMINAR ENVÍO POR NUMERO PEDIDO ---");
+        ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR NÚMERO DE PEDIDO");
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese el NÚMERO de PEDIDO: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Envio envio = envioService.buscarPorNumeroPedido(numeroPedido);
 
             eliminar(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar envío: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al actualizar envío: " + e.getMessage());
         }
     }
 
     public void eliminarEnvioPorId() {
-        System.out.println("\n--- ELIMINAR ENVÍO POR ID ---");
+        ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR ID");
         try {
             Envio envio = envioService.buscarPorId(input.leerLong("Ingrese ID del envío a eliminar: "));
             eliminar(envio);
         } catch (Exception e) {
-            System.out.println("❌ Error al eliminar: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al eliminar: " + e.getMessage());
         }
     }
 
     private void eliminar(Envio envio) {
         if (envio == null) {
-            System.out.println("❌ El envío no existe.");
+            ConsoleUtils.imprimirError("❌ El envío no existe.");
             return;
         } else if (envio.getEstado() == EstadoEnvio.ENTREGADO) {
-            System.out.println("❌ No se puede eliminar un envío que ya ha sido entregado.");
+            ConsoleUtils.imprimirError("❌ No se puede eliminar un envío que ya ha sido entregado.");
             return;
         }
 
-        System.out.print("¿Está seguro que desea eliminar el envío " + envio.getTracking() + "? (s/n): ");
+        ConsoleUtils.imprimirMensaje("¿Está seguro que desea eliminar el envío " + envio.getTracking() + "? (s/n): ");
         if (input.nextLine().trim().equalsIgnoreCase("s")) {
 
             try {
                 // Llamada real al Service
                 envioService.eliminar(envio);
-                System.out.println("✅ Envío eliminado.");
+                ConsoleUtils.imprimirMensaje("✅ Envío eliminado.");
             } catch (Exception e) {
-                System.out.println("❌ Error al eliminar envío: " + e.getMessage());
+                ConsoleUtils.imprimirError("❌ Error al eliminar envío: " + e.getMessage());
             }
         } else {
-            System.out.println("❌ Operación cancelada.");
+            ConsoleUtils.imprimirError("❌ Operación cancelada.");
         }
     }
 
     private Envio crearEnvioEnMemoria() {
-        System.out.println("\n... Configurando datos del Envío ...");
+        ConsoleUtils.imprimirAdvertencia("\n... Configurando datos del Envío ...");
         Envio envio = new Envio();
 
         envio.setCosto(input.leerDouble("Costo del envío: "));
@@ -285,21 +293,21 @@ public class EnvioConsoleController {
     }
 
     private EmpresaEnvio elegirEmpresaEnvio() {
-        System.out.println("Seleccione Empresa de Envío:");
+        ConsoleUtils.imprimirMensaje("Seleccione Empresa de Envío:");
         EmpresaEnvio[] valores = EmpresaEnvio.values();
         input.mostrarOpcionesEnum(valores);
         return valores[input.leerOpcionEnum(valores.length) - 1];
     }
 
     private TipoEnvio elegirTipoEnvio() {
-        System.out.println("Seleccione Tipo de Envío:");
+        ConsoleUtils.imprimirMensaje("Seleccione Tipo de Envío:");
         TipoEnvio[] valores = TipoEnvio.values();
         input.mostrarOpcionesEnum(valores);
         return valores[input.leerOpcionEnum(valores.length) - 1];
     }
 
     private EstadoEnvio elegirEstadoEnvio() {
-        System.out.println("Seleccione Estado del Envío:");
+        ConsoleUtils.imprimirMensaje("Seleccione Estado del Envío:");
         EstadoEnvio[] valores = EstadoEnvio.values();
         input.mostrarOpcionesEnum(valores);
         return valores[input.leerOpcionEnum(valores.length) - 1];

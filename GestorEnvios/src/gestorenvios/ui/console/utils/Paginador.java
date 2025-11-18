@@ -24,7 +24,7 @@ public class Paginador<T> {
                         Consumer<List<T>> consumer,
                         long totalCount) {
         if (totalCount == 0) {
-            System.out.println("No hay registros.");
+            ConsoleUtils.imprimirInfo("No hay registros.");
             return;
         }
 
@@ -38,7 +38,7 @@ public class Paginador<T> {
                 consumer.accept(lista);
 
                 if (totalCount > pageSize * page) {
-                    System.out.print("Presione Enter para ver más o 'q' para salir: ");
+                    ConsoleUtils.imprimirInfo("Presione Enter para ver más o 'q' para salir: ");
                     String in = input.nextLine().trim();
                     continuar = !"q".equalsIgnoreCase(in);
                     page++;

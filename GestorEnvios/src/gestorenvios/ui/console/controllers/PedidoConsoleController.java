@@ -5,6 +5,7 @@ import gestorenvios.entities.Pedido;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
 import gestorenvios.ui.console.output.PedidoPrinter;
+import gestorenvios.ui.console.utils.ConsoleUtils;
 import gestorenvios.ui.console.utils.Paginador;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import java.util.List;
 
 public class PedidoConsoleController {
 
+    public static final String OPERACION_CANCELADA_POR_EL_USUARIO = "❌ Operación cancelada por el usuario.";
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
@@ -22,8 +24,8 @@ public class PedidoConsoleController {
 
     public void crear() {
         try {
-            System.out.println("\n--- CREAR NUEVO PEDIDO ---");
-            String cliente = input.prompt("Nombre del Cliente: ");
+            ConsoleUtils.imprimirDivisores("CREAR NUEVO PEDIDO");
+            String cliente = input.leerStringObligatorio("Nombre del Cliente: ", "nombre de cliente");
             double total = input.leerDouble("Total del pedido: ");
 
             Pedido pedido = new Pedido();
@@ -33,17 +35,17 @@ public class PedidoConsoleController {
             pedido.setEstado(gestorenvios.entities.EstadoPedido.NUEVO);
 
             String numeroPedido = pedidoService.crear(pedido);
-            System.out.println("✅ Pedido Tracking Nro: " + numeroPedido + " creado exitosamente.");
+            ConsoleUtils.imprimirMensaje("✅ Pedido Tracking Nro: " + numeroPedido + " creado exitosamente.");
         } catch (Exception e) {
-            System.out.println("❌ Error al crear el pedido: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al crear el pedido: " + e.getMessage());
         }
     }
 
     public void listar() {
-        System.out.println("\n--- LISTA DE PEDIDOS ---");
+        ConsoleUtils.imprimirDivisores("LISTA DE PEDIDOS");
         try {
             Long total = pedidoService.obtenerCantidadTotalDePedidos();
-            System.out.println("Total de pedidos registrados: " + total);
+            ConsoleUtils.imprimirMensaje("Total de pedidos registrados: " + total);
 
             Paginador<Pedido> paginador = new Paginador<>(50L, input);
             paginador.paginar(
@@ -51,61 +53,68 @@ public class PedidoConsoleController {
                         try {
                             return pedidoService.buscarTodos(cantidad, pagina);
                         } catch (Exception e) {
-                            System.out.println("❌ Error al obtener pedidos: " + e.getMessage());
+                            ConsoleUtils.imprimirError("❌ Error al obtener pedidos: " + e.getMessage());
                             return List.of();
                         }
                     },
-                    lista -> lista.forEach(PedidoPrinter::mostrarResumen),
+                    lista -> {
+                        ConsoleUtils.imprimirLineaVacia();
+                        PedidoPrinter.mostrarCabecera();
+                        lista.forEach(PedidoPrinter::mostrarDetalle);
+                    },
                     total
             );
         } catch (Exception e) {
-            System.out.println("❌ Error al listar pedidos: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al listar pedidos: " + e.getMessage());
         }
     }
 
     public void buscarPorNumero() {
-        System.out.println("\n--- BUSCAR PEDIDO POR NUMERO ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR NÚMERO");
         try {
             String numeroPedido = input.leerNumeroPedido("Ingrese Numero de pedido (PED-XXXXXXXX) o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
-            PedidoPrinter.mostrarResumen(pedido);
+            PedidoPrinter.mostrarCabecera();
+            PedidoPrinter.mostrarDetalle(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por Numero: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por Numero: " + e.getMessage());
         }
     }
 
     public void buscarPorTracking() {
-        System.out.println("\n--- BUSCAR PEDIDO POR TRACKING ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR TRACKING");
         try {
-            String tracking = input.prompt("Ingrese código de tracking: ");
-            Pedido p = pedidoService.buscarPorNumeroTracking(tracking);
-            PedidoPrinter.mostrarResumen(p);
+            String tracking = input.leerStringObligatorio("Ingrese código de tracking: ", "código de tracking");
+            Pedido pedido = pedidoService.buscarPorNumeroTracking(tracking);
+            PedidoPrinter.mostrarCabecera();
+            PedidoPrinter.mostrarDetalle(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por Tracking: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por Tracking: " + e.getMessage());
         }
     }
 
     public void buscarPorId() {
-        System.out.println("\n--- BUSCAR PEDIDO POR ID ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR ID");
         try {
             Long id = input.leerLong("Ingrese ID de pedido: ");
-            Pedido p = pedidoService.buscarPorId(id);
-            PedidoPrinter.mostrarResumen(p);
+            Pedido pedido = pedidoService.buscarPorId(id);
+            PedidoPrinter.mostrarCabecera();
+            PedidoPrinter.mostrarDetalle(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por ID: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por ID: " + e.getMessage());
         }
     }
 
     public void buscarPorCliente() {
-        System.out.println("\n--- BUSCAR PEDIDO POR CLIENTE ---");
+        ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR CLIENTE");
         try {
-            String clienteNombre = input.prompt("Ingrese Cliente de pedido: ");
+            String clienteNombre = input.leerStringObligatorio("Ingrese Cliente de pedido: ", "nombre de cliente");
             Long total = pedidoService.obtenerCantidadTotalDePedidosPorCliente(clienteNombre);
-            System.out.println("Total de pedidos registrados: " + total);
+            ConsoleUtils.imprimirMensaje("Total de pedidos registrados: " + total);
 
             Paginador<Pedido> paginador = new Paginador<>(50L, input);
             paginador.paginar(
@@ -113,38 +122,43 @@ public class PedidoConsoleController {
                         try {
                             return pedidoService.buscarPorCliente(clienteNombre, cantidad, pagina);
                         } catch (Exception e) {
-                            System.out.println("❌ Error al obtener pedidos: " + e.getMessage());
+                            ConsoleUtils.imprimirError("❌ Error al obtener pedidos: " + e.getMessage());
                             return List.of();
                         }
                     },
-                    lista -> lista.forEach(PedidoPrinter::mostrarResumen),
+                    lista -> {
+                        ConsoleUtils.imprimirLineaVacia();
+                        PedidoPrinter.mostrarCabecera();
+                        lista.forEach(PedidoPrinter::mostrarDetalle);
+                    },
                     total
             );
         } catch (Exception e) {
-            System.out.println("❌ Error al buscar por Cliente: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al buscar por Cliente: " + e.getMessage());
         }
     }
 
     public void actualizarPedido() {
-        System.out.println("\n--- ACTUALIZAR PEDIDO ---");
+        ConsoleUtils.imprimirDivisores("ACTUALIZAR PEDIDO POR NÚMERO");
         try {
             String numeroPedido = input.leerNumeroPedido(
                     "Ingrese Numero del pedido a actualizar (PED-XXXXXXXX) o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             if (pedido == null) {
-                System.out.println("❌ El pedido no existe.");
+                ConsoleUtils.imprimirError("❌ El pedido no existe.");
                 return;
             } else if (pedido.getEstado() == EstadoPedido.ENVIADO) {
-                System.out.println("❌ No se puede actualizar un pedido que ya ha sido enviado.");
+                ConsoleUtils.imprimirError("❌ No se puede actualizar un pedido que ya ha sido enviado.");
                 return;
             }
 
-            System.out.println("Datos actuales del pedido:");
-            PedidoPrinter.mostrarResumen(pedido);
+            ConsoleUtils.imprimirMensaje("Datos actuales del pedido:");
+            PedidoPrinter.mostrarCabecera();
+            PedidoPrinter.mostrarDetalle(pedido);
 
             String nuevoCliente = input.prompt(
                     "Nuevo nombre del Cliente (dejar vacío para no cambiar): ");
@@ -160,63 +174,63 @@ public class PedidoConsoleController {
             }
 
             pedidoService.actualizar(pedido);
-            System.out.println("✅ Pedido actualizado correctamente.");
+            ConsoleUtils.imprimirMensaje("✅ Pedido actualizado correctamente.");
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar el pedido: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al actualizar el pedido: " + e.getMessage());
         }
     }
 
     //ELIMINAR PEDIDOS
     public void eliminarPedidoPorNumero() {
-        System.out.println("\n--- ELIMINAR PEDIDO POR NUMERO ---");
+        ConsoleUtils.imprimirDivisores("ELIMINAR PEDIDO POR NÚMERO");
         try {
             String numeroPedido = input.leerNumeroPedido(
                     "Ingrese Numero del pedido a eliminar (PED-XXXXXXXX) o 'q' para salir: ");
             if (numeroPedido.equalsIgnoreCase("q")) {
-                System.out.println("❌ Operación cancelada por el usuario.");
+                ConsoleUtils.imprimirError(OPERACION_CANCELADA_POR_EL_USUARIO);
                 return;
             }
             Pedido pedido = pedidoService.buscarPorNumeroPedido(numeroPedido);
             eliminar(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al eliminar por Número: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al eliminar por Número: " + e.getMessage());
         }
     }
 
     public void eliminarPedidoPorId() {
-        System.out.println("\n--- ELIMINAR PEDIDO POR ID---");
+        ConsoleUtils.imprimirDivisores("ELIMINAR PEDIDO POR ID");
         try {
             Pedido pedido = pedidoService.buscarPorId(input.leerLong("Ingrese ID del pedido a eliminar: "));
             eliminar(pedido);
         } catch (Exception e) {
-            System.out.println("❌ Error al eliminar por ID: " + e.getMessage());
+            ConsoleUtils.imprimirError("❌ Error al eliminar por ID: " + e.getMessage());
         }
     }
 
     private void eliminar(Pedido pedido) {
         if (pedido == null) {
-            System.out.println("❌ El pedido no existe.");
+            ConsoleUtils.imprimirError("❌ El pedido no existe.");
             return;
-        } else if(pedido.getEstado() == EstadoPedido.ENVIADO) {
-            System.out.println("❌ No se puede eliminar un pedido que ya ha sido enviado.");
+        } else if (pedido.getEstado() == EstadoPedido.ENVIADO) {
+            ConsoleUtils.imprimirError("❌ No se puede eliminar un pedido que ya ha sido enviado.");
             return;
         } else if (pedido.getEnvio() != null && !pedido.getEnvio().getEliminado()) {
-            System.out.println("❌ El pedido tiene un envío asociado. Elimine primero el envío: "
+            ConsoleUtils.imprimirError("❌ El pedido tiene un envío asociado. Elimine primero el envío: "
                     + pedido.getEnvio().getTracking());
             return;
         }
 
-        System.out.print("¿Está seguro que desea eliminar el pedido " + pedido.getNumero() + "? (s/n): ");
+        ConsoleUtils.imprimirMensaje("¿Está seguro que desea eliminar el pedido " + pedido.getNumero() + "? (s/n): ");
         if (input.nextLine().trim().equalsIgnoreCase("s")) {
 
             try {
                 pedidoService.eliminar(pedido);
-                System.out.println("✅ Pedido eliminado correctamente.");
+                ConsoleUtils.imprimirMensaje("✅ Pedido eliminado correctamente.");
             } catch (Exception e) {
-                System.out.println("❌ Error al eliminar pedido: " + e.getMessage());
+                ConsoleUtils.imprimirError("❌ Error al eliminar pedido: " + e.getMessage());
             }
         } else {
-            System.out.println("❌ Operación cancelada.");
+            ConsoleUtils.imprimirError("❌ Operación cancelada.");
         }
     }
 }

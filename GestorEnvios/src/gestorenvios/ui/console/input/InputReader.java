@@ -5,6 +5,8 @@ public interface InputReader {
 
     String prompt(String mensaje);
 
+    String leerStringObligatorio(String mensaje, String param);
+
     double leerDouble(String mensaje);
 
     Long leerLong(String mensaje);

@@ -13,6 +13,7 @@ import gestorenvios.ui.console.input.ConsoleInputReader;
 import gestorenvios.ui.console.input.InputReader;
 import gestorenvios.ui.console.input.MenuDisplay;
 import gestorenvios.ui.console.output.PantallaBienvenida;
+import gestorenvios.ui.console.utils.ConsoleUtils;
 
 import java.util.Scanner;
 
@@ -35,7 +36,7 @@ public class AppMenu {
      */
     private boolean running;
 
-    private boolean conexionExitosa;
+    private final boolean conexionExitosa;
 
     /**
      * Constructor que inicializa la aplicación.
@@ -101,7 +102,7 @@ public class AppMenu {
      */
     public void run() {
         if (!conexionExitosa) {
-            System.out.println("Saliendo...");
+            ConsoleUtils.imprimirInfo("Saliendo...");
             return;
         }
 
@@ -111,7 +112,7 @@ public class AppMenu {
                 int opcion = Integer.parseInt(input.nextLine());
                 processOption(opcion);
             } catch (NumberFormatException _) {
-                System.out.println("Entrada inválida. Por favor, ingrese un número.");
+                ConsoleUtils.imprimirError("Entrada inválida. Por favor, ingrese un número.");
             }
         }
         input.close();
@@ -170,10 +171,10 @@ public class AppMenu {
 
             //salir
             case 0 -> {
-                System.out.println("Saliendo...");
+                ConsoleUtils.imprimirInfo("Saliendo...");
                 running = false;
             }
-            default -> System.out.println("Opción no válida.");
+            default -> ConsoleUtils.imprimirError("Opción no válida.");
         }
     }
 

@@ -16,21 +16,21 @@ public class PantallaBienvenida {
      */
     public static boolean mostrar(InputReader input) {
         ConsoleUtils.clearScreen();
-        System.out.println("=============================================");
-        System.out.println("=                                           =");
-        System.out.println("=      BIENVENIDO AL GESTOR DE ENVÍOS       =");
-        System.out.println("=                                           =");
-        System.out.println("=============================================");
-        System.out.println();
-        System.out.print("Verificando conexión con la base de datos... ");
+        ConsoleUtils.imprimirInfo("=============================================");
+        ConsoleUtils.imprimirInfo("=                                           =");
+        ConsoleUtils.imprimirInfo("=      BIENVENIDO AL GESTOR DE ENVÍOS       =");
+        ConsoleUtils.imprimirInfo("=                                           =");
+        ConsoleUtils.imprimirInfo("=============================================");
+        ConsoleUtils.imprimirLineaVacia();
+        ConsoleUtils.imprimirMensaje("Verificando conexión con la base de datos... ");
 
         try {
             if (DbInitController.checkConnection()) {
-                System.out.println("✅ ¡Conexión exitosa!");
-                System.out.println();
+                ConsoleUtils.imprimirMensaje("✅ ¡Conexión exitosa!");
+                ConsoleUtils.imprimirLineaVacia();
                 if (!DbInitController.hasTables()) {
-                    System.out.println("La base de datos está vacía.");
-                    System.out.println("Inicializando...");
+                    ConsoleUtils.imprimirAdvertencia("La base de datos está vacía.");
+                    ConsoleUtils.imprimirMensaje("Inicializando...");
                     DbInitController.inicializarBaseDeDatos();
                 }
                 if (input.prompt("¿Desea cargar datos de prueba? (s/n): ").equalsIgnoreCase("s")) {
@@ -41,9 +41,9 @@ public class PantallaBienvenida {
             }
             return false;
         } catch (Exception e) {
-            System.out.println("❌ ¡ERROR!");
-            System.out.println("Detalle del error: " + e.getMessage());
-            System.out.println("Por favor, revise la configuración en 'application.properties' y asegúrese de que el servidor de base de datos esté en ejecución.");
+            ConsoleUtils.imprimirError("❌ ¡ERROR!");
+            ConsoleUtils.imprimirMensaje("Detalle del error: " + e.getMessage());
+            ConsoleUtils.imprimirAdvertencia("Por favor, revise la configuración en 'application.properties' y asegúrese de que el servidor de base de datos esté en ejecución.");
         }
         return false;
     }

@@ -1,14 +1,16 @@
 package gestorenvios.ui.console.controllers;
 
-import java.sql.Connection;
+import gestorenvios.config.ApplicationConfig;
+import gestorenvios.config.DatabaseConnection;
+import gestorenvios.ui.console.utils.ConsoleUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import gestorenvios.config.DatabaseConnection;
 
 public class DbInitController {
 
@@ -17,7 +19,7 @@ public class DbInitController {
     }
 
     public static void inicializarBaseDeDatos() throws SQLException {
-        System.out.println("\n--- INICIALIZAR BASE DE DATOS ---");
+        ConsoleUtils.imprimirDivisores("INICIALIZANDO BASE DE DATOS");
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
@@ -122,19 +124,19 @@ public class DbInitController {
             // Reactivar la verificación de claves foráneas
             stmt.execute("SET FOREIGN_KEY_CHECKS = 1;");
 
-            System.out.println("✅ Base de datos inicializada correctamente (tablas 'pedidos' y 'envios' creadas/recreadas).");
+            ConsoleUtils.imprimirInfo("✅ Base de datos inicializada correctamente (tablas 'pedidos' y 'envios' creadas/recreadas).");
 
         } catch (Exception e) {
             throw new SQLException("Error al inicializar la base de datos: " + e.getMessage());
         }
     }
 
-    public static void cargarDatosIniciales() throws SQLException, IOException {
-        System.out.println("\n--- CARGANDO DATOS DE PRUEBA ---");
+    public static void cargarDatosIniciales() throws SQLException {
+        ConsoleUtils.imprimirDivisores("CARGANDO DATOS INICIALES");
         try (Connection conn = DatabaseConnection.getConnection();
-                Statement stmt = conn.createStatement();
-                InputStream isr = DbInitController.class.getResourceAsStream("/resources/db/tfi_bd_grupo175_dump.sql");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(isr))) {
+             Statement stmt = conn.createStatement();
+             InputStream isr = DbInitController.class.getResourceAsStream(ApplicationConfig.get("db.dump.path"));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(isr))) {
 
             StringBuilder sql = new StringBuilder();
             String line;
@@ -145,12 +147,12 @@ public class DbInitController {
                     sql.setLength(0); // Limpiar el StringBuilder para la siguiente sentencia
                 }
             }
-            System.out.println("✅ Datos de prueba cargados correctamente.");
+            ConsoleUtils.imprimirInfo("✅ Datos de prueba cargados correctamente.");
         } catch (SQLException | IOException e) {
             throw new SQLException("Error al cargar datos iniciales: " + e.getMessage());
         }
     }
-    
+
     public static boolean checkConnection() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection()) {
             return conn != null && !conn.isClosed();
@@ -160,13 +162,10 @@ public class DbInitController {
     }
 
     public static boolean hasTables() throws SQLException {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            var stmt = conn.createStatement();
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
             var rs = stmt.executeQuery("SHOW TABLES");
-            if (rs.next()) {
-                return true; // Si hay al menos una tabla, asumimos que la BD está poblada
-            }
-            return false; // No se encontraron tablas
+            return rs.next();
         } catch (SQLException e) {
             throw new SQLException("Error al verificar las tablas: " + e.getMessage());
         }
