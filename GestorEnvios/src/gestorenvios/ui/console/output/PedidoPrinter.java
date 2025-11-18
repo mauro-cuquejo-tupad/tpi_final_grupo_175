@@ -10,24 +10,24 @@ public class PedidoPrinter {
     private static final int ANCHO_NUMERO = 12;
     private static final int ANCHO_ESTADO = 12;
     private static final int ANCHO_ENVIO = 36;
-    private static final int ANCHO_ESTADO_ENVIO = 12;
+    private static final int ANCHO_ESTADO_ENVIO = 15;
 
-    private static final String ALINEACION_IZQ = "%-";
+    public static final String SEP_COLUMNA = " | ";
 
     private PedidoPrinter() {
         // Constructor privado para evitar instanciación
     }
 
     public static void mostrarCabecera() {
-        String cabeceraTabla = String.format(ALINEACION_IZQ + ANCHO_ID + "s | " +
-                        ALINEACION_IZQ + ANCHO_CLIENTE + "s | " +
-                        ALINEACION_IZQ + ANCHO_NUMERO + "s | " +
-                        ALINEACION_IZQ + ANCHO_ESTADO + "s | " +
-                        ALINEACION_IZQ + ANCHO_ENVIO + "s | " +
-                        ALINEACION_IZQ + ANCHO_ESTADO_ENVIO + "s",
-                "ID", "Cliente", "Nº", "Estado", "Envío", "Estado envío");
-        ConsoleUtils.imprimirInfo(cabeceraTabla);
-        ConsoleUtils.imprimirInfo(finalizarCabeceraTabla(cabeceraTabla.length()));
+        String cabecera = ConsoleUtils.padRight("ID", ANCHO_ID) + SEP_COLUMNA +
+                ConsoleUtils.padRight("Cliente", ANCHO_CLIENTE) + SEP_COLUMNA +
+                ConsoleUtils.padRight("Nº", ANCHO_NUMERO) + SEP_COLUMNA +
+                ConsoleUtils.padRight("Estado", ANCHO_ESTADO) + SEP_COLUMNA +
+                ConsoleUtils.padRight("Envío", ANCHO_ENVIO) + SEP_COLUMNA +
+                ConsoleUtils.padRight("Estado envío", ANCHO_ESTADO_ENVIO) + SEP_COLUMNA;
+
+        ConsoleUtils.imprimirInfo(cabecera);
+        ConsoleUtils.imprimirInfo(separadorFila(cabecera.length() - 1));
     }
 
     public static void mostrarDetalle(Pedido pedido) {
@@ -41,12 +41,18 @@ public class PedidoPrinter {
         String envioEstado = pedido.getEnvio() != null && !pedido.getEnvio().getEliminado()
                 ? pedido.getEnvio().getEstado().name()
                 : "-";
-        String detalle = String.format(ALINEACION_IZQ + ANCHO_ID + "s | %-" + ANCHO_CLIENTE + "s | %-" + ANCHO_NUMERO + "s | %-" + ANCHO_ESTADO + "s | %-" + ANCHO_ENVIO + "s | %-" + ANCHO_ESTADO_ENVIO + "s",
-                pedido.getId(), pedido.getClienteNombre(), pedido.getNumero(), pedido.getEstado(), envioTracking, envioEstado);
+
+        String detalle = ConsoleUtils.padRight(pedido.getId().toString(), ANCHO_ID) + SEP_COLUMNA +
+                ConsoleUtils.padRight(pedido.getClienteNombre(), ANCHO_CLIENTE) + SEP_COLUMNA +
+                ConsoleUtils.padRight(pedido.getNumero(), ANCHO_NUMERO) + SEP_COLUMNA +
+                ConsoleUtils.padRight(pedido.getEstado().name(), ANCHO_ESTADO) + SEP_COLUMNA +
+                ConsoleUtils.padRight(envioTracking, ANCHO_ENVIO) + SEP_COLUMNA +
+                ConsoleUtils.padRight(envioEstado, ANCHO_ESTADO_ENVIO) + SEP_COLUMNA;
+
         ConsoleUtils.imprimirInfo(detalle);
     }
 
-    private static String finalizarCabeceraTabla(int n) {
+    private static String separadorFila(int n) {
         return new String(new char[n]).replace("\0", "-");
     }
 }
