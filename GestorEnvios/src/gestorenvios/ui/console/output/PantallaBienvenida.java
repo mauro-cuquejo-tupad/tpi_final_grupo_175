@@ -9,7 +9,7 @@ public class PantallaBienvenida {
     private PantallaBienvenida() {
     }
 
-    /**
+    /***
      * Muestra la pantalla de bienvenida y verifica la conexión a la base de datos.
      *
      * @return true si la conexión es exitosa, false en caso contrario.
