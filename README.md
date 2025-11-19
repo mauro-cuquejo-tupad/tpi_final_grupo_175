@@ -398,10 +398,7 @@ Este es un proyecto académico. Para sugerencias o mejoras, contactar al equipo 
 
 ---
 
-## 📞 Soporte
-
-Para problemas técnicos o consultas sobre el proyecto, consultar la documentación del código o contactar a los miembros del Grupo 175.
-
 ---
 
-**Desarrollado con ❤️ por el Grupo 175**
+### Link a Youtube
+[Trabajo Final Integrador - Programación II](https://www.youtube.com/watch?v=31zH4OI2j84)
