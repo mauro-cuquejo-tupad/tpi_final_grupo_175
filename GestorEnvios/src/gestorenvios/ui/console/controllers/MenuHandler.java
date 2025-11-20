@@ -6,11 +6,21 @@ import gestorenvios.services.GenericEnviosService;
 import gestorenvios.services.GenericPedidosService;
 import gestorenvios.ui.console.input.InputReader;
 
+/***
+ * Maneja el menú de opciones para pedidos y envíos en la consola.
+ */
 public class MenuHandler {
 
     private final PedidoConsoleController pedidoConsoleController;
     private final EnvioConsoleController envioConsoleController;
 
+    /***
+     * Constructor del MenuHandler.
+     *
+     * @param pedidoService Servicio genérico para manejar pedidos.
+     * @param envioService  Servicio genérico para manejar envíos.
+     * @param input         Lector de entrada para interactuar con el usuario.
+     */
     public MenuHandler(GenericPedidosService<Pedido> pedidoService,
                        GenericEnviosService<Envio, Pedido> envioService,
                        InputReader input) {

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
+/***
  * Proporciona la conexión a la base de datos usando los parámetros de configuración.
  * Clase utilitaria (no instanciable).
  */
@@ -36,7 +36,7 @@ public class DatabaseConnection {
                 "Esta es una clase utilitaria y no debe ser instanciada");
     }
 
-    /**
+    /***
      * Obtiene una nueva conexión a la base de datos.
      *
      * @return Conexión JDBC
@@ -46,7 +46,7 @@ public class DatabaseConnection {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
-    /**
+    /***
      * Valida que los parámetros de configuración de la base de datos estén presentes.
      *
      * @throws IllegalStateException si falta algún parámetro requerido

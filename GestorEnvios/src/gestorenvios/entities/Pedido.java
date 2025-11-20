@@ -2,18 +2,20 @@ package gestorenvios.entities;
 
 import java.time.LocalDate;
 
-/**
- * Entidad que representa un Pedido realizado por un cliente.
+/***
+ * Entidad que representa un pedido realizado por un cliente.
  * <p>
- * Campos (según consigna):
- * - id: Long (PK)
- * - eliminado: Boolean (baja lógica)
- * - numero: String (NOT NULL, UNIQUE, máx. 20)
- * - fecha: LocalDate (NOT NULL)
- * - clienteNombre: String (NOT NULL, máx. 120)
- * - total: double (12,2) NOT NULL
- * - estado: EstadoPedido (NUEVO, FACTURADO, ENVIADO)
- * - envio: referencia 1→1 a Envios
+ * Campos según consigna:
+ * <ul>
+ *   <li><b>id</b>: Long (PK)</li>
+ *   <li><b>eliminado</b>: Boolean (baja lógica)</li>
+ *   <li><b>numero</b>: String (NOT NULL, UNIQUE, máx. 20)</li>
+ *   <li><b>fecha</b>: LocalDate (NOT NULL)</li>
+ *   <li><b>clienteNombre</b>: String (NOT NULL, máx. 120)</li>
+ *   <li><b>total</b>: double (12,2) NOT NULL</li>
+ *   <li><b>estado</b>: EstadoPedido (NUEVO, FACTURADO, ENVIADO)</li>
+ *   <li><b>envio</b>: referencia 1→1 a Envios</li>
+ * </ul>
  */
 public class Pedido {
 
@@ -25,28 +27,7 @@ public class Pedido {
     private String clienteNombre;
     private Double total;
     private EstadoPedido estado;
-    private Envio envio; // Relación 1→1
-
-    public Pedido() {
-    }
-
-    public Pedido(Long id,
-                  Boolean eliminado,
-                  String numero,
-                  LocalDate fecha,
-                  String clienteNombre,
-                  Double total,
-                  EstadoPedido estado,
-                  Envio envio) {
-        this.id = id;
-        this.eliminado = eliminado;
-        this.numero = numero;
-        this.fecha = fecha;
-        this.clienteNombre = clienteNombre;
-        this.total = total;
-        this.estado = estado;
-        this.envio = envio;
-    }
+    private Envio envio; // Relación 1 a 1 con Envio
 
     public Long getId() {
         return id;

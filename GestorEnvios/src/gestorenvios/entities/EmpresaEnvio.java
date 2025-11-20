@@ -1,6 +1,6 @@
 package gestorenvios.entities;
 
-/**
+/***
  * Empresas habilitadas para realizar el envío.
  */
 public enum EmpresaEnvio {
@@ -20,7 +20,7 @@ public enum EmpresaEnvio {
         return id;
     }
 
-    /**
+    /***
      * método para convertir el INT de la BD a un ENUM.
      *
      * @param id El ID de la base de datos.

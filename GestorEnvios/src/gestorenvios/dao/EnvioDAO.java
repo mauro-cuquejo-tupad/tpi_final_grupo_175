@@ -10,64 +10,57 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO para gestionar la persistencia de envíos en la base de datos.
- *
- * <p>Implementa operaciones CRUD y consultas especializadas sobre la tabla Envio,
- * incluyendo búsqueda por tracking y número de pedido asociado. Todas las operaciones
- * respetan el soft delete filtrando registros eliminados.</p>
- *
- * @author Grupo 175
- * @version 1.0
- * @since 2025-01-17
- * @see Envio
- * @see GenericDAO
+/***
+ * DAO para operaciones CRUD y consultas sobre la entidad Envio.
  */
 public class EnvioDAO implements GenericDAO<Envio> {
 
-    /** Campos estándar seleccionados en las consultas de envío. */
+    /*** Campos estándar seleccionados en las consultas de envío. */
     private static final String CAMPOS_ENVIO = " e.id, e.eliminado, e.tracking, e.id_empresa, e.id_tipo_envio, e.costo,"
             + " e.fecha_despacho, e.fecha_estimada, e.id_estado_envio";
 
-    /** Query base para SELECT de envíos. */
+    /*** Query base para SELECT de envíos. */
     private static final String QUERY_BASE = "SELECT" + CAMPOS_ENVIO + " FROM Envio e";
 
-    /** Query para contar envíos activos (no eliminados). */
+    /*** Query para contar envíos activos (no eliminados). */
     private static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Envio WHERE eliminado = FALSE";
 
-    /** Query para insertar un nuevo envío. */
+    /*** Query para insertar un nuevo envío. */
     private static final String INSERT_SQL = "INSERT INTO Envio (eliminado, tracking, id_empresa, id_tipo_envio, costo, fecha_despacho, fecha_estimada, id_estado_envio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    /** Query para actualizar un envío existente por ID. */
+    /*** Query para actualizar un envío existente por ID. */
     private static final String UPDATE_SQL = "UPDATE Envio SET tracking = ?, id_empresa = ?, id_tipo_envio = ?, costo = ?, fecha_despacho = ?, fecha_estimada = ?, id_estado_envio = ? WHERE id = ?";
 
-    /** Query para eliminación lógica de un envío. */
+    /*** Query para eliminación lógica de un envío. */
     private static final String DELETE_SQL = "UPDATE Envio SET eliminado = TRUE WHERE id = ?";
 
-    /** Query para listar envíos activos con paginación. */
+    /*** Query para listar envíos activos con paginación. */
     private static final String SELECT_ALL_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE"
             + " LIMIT ? OFFSET ?";
 
-    /** Query para buscar un envío activo por ID. */
+    /*** Query para buscar un envío activo por ID. */
     private static final String SELECT_BY_ID_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE AND e.id = ?";
 
-    /** Query para buscar un envío activo por código de tracking. */
+    /*** Query para buscar un envío activo por código de tracking. */
     private static final String SELECT_BY_TRACKING_SQL = QUERY_BASE
             + " WHERE e.eliminado = FALSE AND e.tracking = ?";
 
-    private static final String SEARCH_MAX_TRACKING = "SELECT MAX(tracking) AS tracking FROM Envio WHERE tracking like 'TRK-%'";
+    /*** Query para buscar el último número de tracking, cuyo código tenga el string 'TRK-' al inicio. */
+    private static final String SEARCH_MAX_TRACKING = "SELECT MAX(tracking) AS tracking FROM Envio "
+    + "WHERE tracking like 'TRK-%' ";
 
-    /** Query para buscar un envío por número de pedido asociado. Incluye JOIN con tabla Pedido. */
+    /*** Query para buscar un envío por número de pedido asociado. Incluye JOIN con tabla Pedido. */
     private static final String SELECT_BY_NUMERO_SQL = QUERY_BASE
             + " LEFT JOIN Pedido p  ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE"
             + " AND p.numero = ?";
 
+    /*** Nombre del campo tracking en la tabla envio */
     private static final String ENVIO_TRACKING = "tracking";
 
-    /**
+    /***
      * Inserta un envío dentro de una transacción externa.
      * No gestiona la conexión, debe ser proporcionada por el invocador.
      *
@@ -91,9 +84,9 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    /**
+    /***
      * Actualiza un envío existente dentro de una transacción externa.
-     * No gestiona la conexión ni el commit/rollback.
+     * No gestiona la conexión, debe ser proporcionada por el invocador.
      *
      * @param envio Envío con datos actualizados
      * @param conn Conexión activa de base de datos
@@ -131,7 +124,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    /**
+    /***
      * Realiza eliminación lógica de un envío dentro de una transacción externa.
      *
      * @param id ID del envío a eliminar
@@ -148,7 +141,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    /**
+    /***
      * Busca un envío activo por su ID.
      *
      * @param id ID del envío a buscar
@@ -171,8 +164,8 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
-    /**
-     * Busca un envío activo por su código de tracking único.
+    /***
+     * Busca un envío activo por su código de tracking.
      *
      * @param tracking Código de tracking del envío
      * @return Envío encontrado o null si no existe
@@ -195,9 +188,8 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
-    /**
-     * Busca un envío por el número del pedido asociado.
-     * Realiza JOIN con la tabla Pedido.
+    /***
+     * Busca un envío por el número del pedido asociado. Realiza JOIN con la tabla Pedido.
      *
      * @param numero Número del pedido
      * @return Envío encontrado o null si no existe
@@ -220,12 +212,12 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
-    /**
+    /***
      * Lista todos los envíos activos con paginación.
      *
-     * @param cantidad Número de registros por página
-     * @param pagina Número de página (base 1)
-     * @return Lista de envíos de la página solicitada
+     * @param cantidad Número de registros por página (si es null, usa 50 por defecto)
+     * @param pagina Número de página (si es null, usa 1 por defecto)
+     * @return Lista de envíos de la página solicitada (puede estar vacía)
      * @throws SQLException si ocurre un error en la consulta
      */
     @Override
@@ -253,7 +245,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envios;
     }
 
-    /**
+    /***
      * Obtiene el último tracking de envio insertado en una transacción.
      *
      * @param conn Conexión transaccional
@@ -271,13 +263,13 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return null;
     }
 
-    /**
-     * Setea los parámetros del PreparedStatement para INSERT.
+    /***
+     * Setea los parámetros del PreparedStatement para insertar un envío.
      * El parámetro eliminado (índice 1) debe setearse manualmente antes de llamar este método.
      *
      * @param pstmt PreparedStatement a configurar
      * @param envio Envío con los datos a insertar
-     * @throws SQLException si hay error al setear parámetros
+     * @throws SQLException si ocurre un error al setear los parámetros
      */
     private void setEnvioParameters(PreparedStatement pstmt, Envio envio) throws SQLException {
 
@@ -302,7 +294,7 @@ public class EnvioDAO implements GenericDAO<Envio> {
         pstmt.setInt(8, envio.getEstado().getId());
     }
 
-    /**
+    /***
      * Recupera el ID generado automáticamente y lo asigna al envío.
      *
      * @param pstmt PreparedStatement que ejecutó el INSERT
@@ -317,11 +309,10 @@ public class EnvioDAO implements GenericDAO<Envio> {
         }
     }
 
-    /**
-     * Mapea un registro del ResultSet a un objeto Envio.
-     * Convierte los IDs de la base de datos a enums de Java usando fromId.
+    /***
+     * Mapea un ResultSet a un objeto Envío.
      *
-     * @param resultSet ResultSet posicionado en el registro a mapear
+     * @param resultSet ResultSet del registro a mapear
      * @return Envío construido con los datos del registro
      * @throws SQLException si ocurre un error al leer el ResultSet
      */
@@ -347,6 +338,14 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envio;
     }
 
+    /***
+     * Mapea un ResultSet a un objeto Envío, usando un ID proporcionado.
+     *
+     * @param rs ResultSet del registro a mapear
+     * @param idEnvio ID del envío
+     * @return Envío construido con los datos del registro
+     * @throws SQLException si ocurre un error al leer el ResultSet
+     */
     public static Envio toEnvio(ResultSet rs, Long idEnvio) throws SQLException {
         Envio envio = new Envio();
         envio.setId(idEnvio);
@@ -368,8 +367,8 @@ public class EnvioDAO implements GenericDAO<Envio> {
         return envio;
     }
 
-    /**
-     * Obtiene el total de envíos activos (no eliminados) en la base de datos.
+    /***
+     * Obtiene el total de envíos activos en la base de datos.
      *
      * @return Cantidad total de envíos
      * @throws SQLException si ocurre un error en la consulta

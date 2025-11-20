@@ -12,6 +12,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/***
+ * Controlador para la inicialización de la base de datos.
+ */
 public class DbInitController {
 
     private DbInitController() {

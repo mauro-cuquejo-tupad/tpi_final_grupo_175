@@ -17,20 +17,33 @@ import gestorenvios.ui.console.utils.ConsoleUtils;
 
 import java.util.Scanner;
 
+/***
+ * Clase principal que maneja el menú de la aplicación de gestión de envíos y
+ * pedidos.
+ * <p>
+ * Responsabilidades: - Inicializar dependencias (DAOs, Services, Handlers) -
+ * Ejecutar loop principal del menú - Procesar opciones seleccionadas por el
+ * usuario
+ * <p>
+ * Patrón de diseño: - Inyección de dependencias (DI) manual mediante factory
+ * methods - Separación clara entre capa de presentación (AppMenu,
+ * MenuDisplay), lógica de negocio (MenuHandler, Services) y acceso a datos
+ * (DAOs)
+ */
 public class AppMenu {
 
-    /**
+    /***
      * Scanner único compartido por toda la aplicación.
      */
     private final InputReader input;
 
-    /**
+    /***
      * Handler que ejecuta las operaciones del menú. Contiene toda la lógica de
      * interacción con el usuario.
      */
     private final MenuHandler menuHandler;
 
-    /**
+    /***
      * Flag que controla el loop principal del menú. Se setea a false cuando el
      * usuario selecciona "0 - Salir".
      */
@@ -38,7 +51,7 @@ public class AppMenu {
 
     private final boolean conexionExitosa;
 
-    /**
+    /***
      * Constructor que inicializa la aplicación.
      * <p>
      * Flujo de inicialización: 1. Crea Scanner único para toda la aplicación 2.
@@ -67,11 +80,18 @@ public class AppMenu {
         this.conexionExitosa = PantallaBienvenida.mostrar(input);
     }
 
+    /***
+     * Crea el servicio de envíos con la dependencia del servicio de pedidos.
+     *
+     * @param pedidoService Servicio de pedidos a inyectar en el servicio de
+     *                      envíos
+     * @return Instancia de GenericEnviosService<Envio, Pedido>
+     */
     private GenericEnviosService<Envio, Pedido> crearEnvioService(GenericPedidosService<Pedido> pedidoService) {
         return new EnvioServiceImpl(new EnvioDAO(), pedidoService);
     }
 
-    /**
+    /***
      * Punto de entrada de la aplicación Java. Crea instancia de AppMenu y
      * ejecuta el menú principal.
      *
@@ -81,7 +101,7 @@ public class AppMenu {
         app.run();
     }
 
-    /**
+    /***
      * Loop principal del menú.
      * <p>
      * Flujo: 1. Mientras running==true:
@@ -118,31 +138,16 @@ public class AppMenu {
         input.close();
     }
 
-    /**
-     * Procesa la opción seleccionada por el usuario y delega a MenuHandler.
+    /***
+     * Procesa la opción seleccionada por el usuario.
      * <p>
-     * Switch expression (Java 14+) con operador arrow (->): - Más conciso que
-     * switch tradicional - No requiere break (cada caso es independiente) -
-     * Permite bloques con {} para múltiples statements
-     * <p>
-     * Mapeo de opciones (corresponde a MenuDisplay): 1 → Crear pedido (con
-     * enví opcional) 2 → Listar pedidos (todos o filtradas) 3 →
-     * Actualizar pedido 4 → Eliminar pedido (soft delete) 5 → Crear envio
-     * independiente 6 → Listar envios 7 → Actualizar envio por ID
-     * (afecta a todas los pedidos que lo comparten) 8 → Eliminar envio por
-     * ID (PELIGROSO - puede dejar FKs huérfanas) 9 → ActualiEnvios de
-     * una pedido (afecta a todos las pedidos que lo comparten) 10 → Eliminar
-     * envio de un pedido (SEGURO - actualiza FK primero) 0 → Salir (setea
-     * running=false para terminar el loop)
-     * <p>
-     * Opción inválida: Muestra mensaje y continúa el loop.
-     * <p>
-     * IMPORTANTE: Todas las excepciones de MenuHandler se capturan dentro de
-     * los métodos. processOption() NO propaga excepciones al caller (run()).
+     * Flujo: 1. Recibe opción como int 2. Usa switch-case para mapear opción a
+     * método de MenuHandler 3. Llama al método correspondiente 4. Si opción es
+     * 0, setea running=false para salir del loop 5. Si opción no es válida,
+     * muestra mensaje de error
      *
-     * @param opcion Número de opción ingresado por el usuario
+     * @param opcion Opción seleccionada por el usuario
      */
-
     private void processOption(int opcion) {
         switch (opcion) {
             //pedidos
@@ -178,34 +183,11 @@ public class AppMenu {
         }
     }
 
-    /**
-     * Factory method que crea la cadena de dependencias de servicios.
-     * Implementa inyección de dependencias manual.
-     * <p>
-     * Orden de creación (bottom-up desde la capa más baja): 1. EnviosDAO:
-     * Sin dependencias, acceso directo a BD 2. PedidoDAO: Depende de
-     * EnviosDAO (inyectado en constructor) 3. EnvioServiceImpl: Depende
-     * de EnviosDAO 4. PedidoServiceImpl: Depende de PedidoDAO y
-     * EnvioServiceImpl
-     * <p>
-     * Arquitectura resultante (4 capas): Main (AppMenu, MenuHandler) ↓ Service
-     * (PedidoServiceImpl, EnvioServiceImpl) ↓ DAO (PedidoDAO,
-     * EnviosDAO) ↓ Models (Pedido, Envios, Base)
-     * <p>
-     * ¿Por qué PedidoDAO necesita EnviosDAO? - Actualmente NO lo usa
-     * (inyección preparada para futuras operaciones) - Podría usarse para
-     * operaciones transaccionales coordinadas
-     * <p>
-     * ¿Por qué PedidoService necesita EnvioService? - Para
-     * insertar/actualizar envios al crear/actualizar pedidos - Para
-     * eliminar envios de forma segura (eliminarEnviosDePedido)
-     * <p>
-     * Patrón: Factory Method para construcción de dependencias
+    /***
+     * Crea el servicio de pedidos con su dependencia del DAO.
      *
-     * @return PedidoServiceImpl completamente inicializado con todas sus
-     * dependencias
+     * @return Instancia de GenericPedidosService<Pedido>
      */
-
     private GenericPedidosService<Pedido> createPedidoService() {
         PedidoDAO pedidoDAO = new PedidoDAO();
         return new PedidoServiceImpl(pedidoDAO);

@@ -11,14 +11,32 @@ import gestorenvios.ui.console.utils.Paginador;
 import java.time.LocalDate;
 import java.util.List;
 
+/***
+ * Controlador de consola para gestionar envíos.
+ */
 public class EnvioConsoleController {
 
+    /***
+     * Mensaje de operación cancelada por el usuario.
+     */
     public static final String OPERACION_CANCELADA_POR_EL_USUARIO = "❌ Operación cancelada por el usuario.";
+
+    /***
+     * Mensaje de envío actualizado correctamente.
+     */
     public static final String ENVIO_ACTUALIZADO_CORRECTAMENTE = "✅ Envío actualizado de Tracking %s actualizado correctamente.";
+
     private final GenericEnviosService<Envio, Pedido> envioService;
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
+    /***
+     * Constructor del controlador de consola para envíos.
+     *
+     * @param envioService Servicio genérico de envíos.
+     * @param pedidoService Servicio genérico de pedidos.
+     * @param input Lector de entrada de consola.
+     */
     public EnvioConsoleController(GenericEnviosService<Envio, Pedido> envioService,
                                   GenericPedidosService<Pedido> pedidoService,
                                   InputReader input) {
@@ -27,6 +45,9 @@ public class EnvioConsoleController {
         this.input = input;
     }
 
+    /***
+     * Crea un nuevo envío y lo asigna a un pedido existente.
+     */
     public void crear() {
         ConsoleUtils.imprimirDivisores("CREAR NUEVO ENVÍO POR NUMERO PEDIDO");
         try {
@@ -46,6 +67,11 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Obtiene un pedido válido para asignar un envío.
+     *
+     * @return Pedido válido o null si la operación fue cancelada.
+     */
     private Pedido getPedido() {
         Pedido pedido;
         while (true) {
@@ -67,6 +93,9 @@ public class EnvioConsoleController {
         return pedido;
     }
 
+    /***
+     * Lista todos los envíos con paginación.
+     */
     public void listar() {
         ConsoleUtils.imprimirDivisores("LISTA DE ENVÍOS");
         try {
@@ -95,6 +124,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Busca un envío por su número de tracking.
+     */
     public void buscarPorTracking() {
         ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR TRACKING");
         try {
@@ -106,6 +138,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Busca un envío por su número de pedido.
+     */
     public void buscarPorNumeroPedido() {
         ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR NUMERO PEDIDO");
         try {
@@ -123,6 +158,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Busca un envío por su ID.
+     */
     public void buscarPorId() {
         ConsoleUtils.imprimirDivisores("BUSCAR ENVIO POR ID");
         try {
@@ -134,6 +172,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Actualiza el estado de un envío buscado por su número de tracking.
+     */
     public void actualizarEstadoPorTracking() {
         ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR TRACKING");
         Envio envio;
@@ -149,6 +190,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Actualiza el estado de un envío buscado por su ID.
+     */
     public void actualizarEstadoEnvioPorId() {
         ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR ID");
         Envio envio;
@@ -164,6 +208,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Actualiza el estado de un envío buscado por el número de pedido asociado.
+     */
     public void actualizarEstadoEnvioPorNumeroPedido() {
         ConsoleUtils.imprimirDivisores("ACTUALIZAR ESTADO DE ENVÍO POR NÚMERO DE PEDIDO");
         Envio envio;
@@ -195,6 +242,11 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Actualiza el estado de un envío.
+     *
+     * @param envio Envío a actualizar.
+     */
     private void actualizarEstadoEnvio(Envio envio) {
         if (envio == null) {
             ConsoleUtils.imprimirError("❌ Envío no encontrado.");
@@ -215,8 +267,9 @@ public class EnvioConsoleController {
         }
     }
 
-    //Eliminar envíos
-
+    /***
+     * Elimina un envío buscado por su número de tracking.
+     */
     public void eliminarEnvioPorTracking() {
         ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR TRACKING");
         try {
@@ -227,6 +280,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Elimina un envío buscado por el número de pedido asociado.
+     */
     public void eliminarEnvioPorNumeroPedido() {
         ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR NÚMERO DE PEDIDO");
         try {
@@ -243,6 +299,9 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Elimina un envío buscado por su ID.
+     */
     public void eliminarEnvioPorId() {
         ConsoleUtils.imprimirDivisores("ELIMINAR ENVÍO POR ID");
         try {
@@ -253,6 +312,11 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Elimina un envío si no ha sido entregado.
+     *
+     * @param envio Envío a eliminar.
+     */
     private void eliminar(Envio envio) {
         if (envio == null) {
             ConsoleUtils.imprimirError("❌ El envío no existe.");
@@ -277,6 +341,11 @@ public class EnvioConsoleController {
         }
     }
 
+    /***
+     * Crea un nuevo envío en memoria solicitando los datos al usuario.
+     *
+     * @return Envío creado en memoria.
+     */
     private Envio crearEnvioEnMemoria() {
         ConsoleUtils.imprimirAdvertencia("\n... Configurando datos del Envío ...");
         Envio envio = new Envio();
@@ -292,6 +361,11 @@ public class EnvioConsoleController {
         return envio;
     }
 
+    /***
+     * Solicita al usuario que elija una empresa de envío.
+     *
+     * @return Empresa de envío seleccionada.
+     */
     private EmpresaEnvio elegirEmpresaEnvio() {
         ConsoleUtils.imprimirMensaje("Seleccione Empresa de Envío:");
         EmpresaEnvio[] valores = EmpresaEnvio.values();
@@ -299,6 +373,11 @@ public class EnvioConsoleController {
         return valores[input.leerOpcionEnum(valores.length) - 1];
     }
 
+    /***
+     * Solicita al usuario que elija un tipo de envío.
+     *
+     * @return Tipo de envío seleccionado.
+     */
     private TipoEnvio elegirTipoEnvio() {
         ConsoleUtils.imprimirMensaje("Seleccione Tipo de Envío:");
         TipoEnvio[] valores = TipoEnvio.values();
@@ -306,6 +385,11 @@ public class EnvioConsoleController {
         return valores[input.leerOpcionEnum(valores.length) - 1];
     }
 
+    /***
+     * Solicita al usuario que elija un estado de envío.
+     *
+     * @return Estado de envío seleccionado.
+     */
     private EstadoEnvio elegirEstadoEnvio() {
         ConsoleUtils.imprimirMensaje("Seleccione Estado del Envío:");
         EstadoEnvio[] valores = EstadoEnvio.values();

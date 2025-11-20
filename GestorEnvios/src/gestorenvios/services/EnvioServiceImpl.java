@@ -16,15 +16,29 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
+/***
+ * Implementación del servicio genérico para la gestión de envíos.
+ */
 public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
     EnvioDAO envioDAO;
     GenericPedidosService<Pedido> pedidosService;
 
+    /***
+     * Constructor de la clase EnvioServiceImpl.
+     * @param envioDAO DAO para la gestión de envíos.
+     * @param pedidosService Servicio genérico para la gestión de pedidos.
+     */
     public EnvioServiceImpl(EnvioDAO envioDAO, GenericPedidosService<Pedido> pedidosService) {
         this.envioDAO = envioDAO;
         this.pedidosService = pedidosService;
     }
 
+    /***
+     * Crea un nuevo envío en la base de datos.
+     * @param envio El envío a crear.
+     * @return El número de tracking del envío creado.
+     * @throws CreacionEntityException Si ocurre un error durante la creación del envío.
+     */
     @Override
     public String crear(Envio envio) throws CreacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -36,6 +50,13 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Crea un nuevo envío en una transacción.
+     * @param envio El envío a crear.
+     * @param transactionManager El gestor de transacciones.
+     * @param conn La conexión a la base de datos.
+     * @return El número de tracking del envío creado.
+     */
     private String crearTx(Envio envio, TransactionManager transactionManager, Connection conn) {
         try {
             transactionManager.startTransaction();
@@ -49,6 +70,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Genera un nuevo número de tracking para un envío.
+     * @param conn La conexión a la base de datos.
+     * @return El nuevo número de tracking.
+     */
     private String generarNuevoNumeroTrackingTx(Connection conn) {
         try {
             String ultimoTracking = envioDAO.buscarUltimoNumeroTrackingTx(conn);
@@ -65,6 +91,10 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Valida los datos de un envío.
+     * @param envio El envío a validar.
+     */
     private void validarEnvio(Envio envio) {
         if (envio.getCosto() < 0) {
             throw new IllegalArgumentException("El total del pedido no puede negativo.");
@@ -77,6 +107,13 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Busca todos los envíos con paginación.
+     * @param cantidad La cantidad de envíos a buscar.
+     * @param pagina La página de resultados a buscar.
+     * @return Una lista de envíos.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public List<Envio> buscarTodos(Long cantidad, Long pagina) throws ConsultaEntityException {
         try {
@@ -86,6 +123,12 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Busca un envío por su ID.
+     * @param id El ID del envío a buscar.
+     * @return El envío encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Envio buscarPorId(Long id) throws ConsultaEntityException {
         try {
@@ -95,6 +138,12 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Busca un envío por su número de tracking.
+     * @param tracking El número de tracking del envío a buscar.
+     * @return El envío encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Envio buscarPorTracking(String tracking) throws ConsultaEntityException {
         try {
@@ -104,6 +153,12 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Busca un envío por el número de pedido asociado.
+     * @param numero El número de pedido del envío a buscar.
+     * @return El envío encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Envio buscarPorNumeroPedido(String numero) throws ConsultaEntityException {
         try {
@@ -113,6 +168,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Obtiene la cantidad total de envíos.
+     * @return La cantidad total de envíos.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Long obtenerCantidadTotalDeEnvios() throws ConsultaEntityException {
         try {
@@ -122,6 +182,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Actualiza un envío en la base de datos.
+     * @param envio El envío a actualizar.
+     * @throws ActualizacionEntityException Si ocurre un error durante la actualización del envío.
+     */
     @Override
     public void actualizar(Envio envio) throws ActualizacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -132,6 +197,12 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Actualiza un envío en una transacción.
+     * @param envio El envío a actualizar.
+     * @param transactionManager El gestor de transacciones.
+     * @param conn La conexión a la base de datos.
+     */
     private void actualizarTx(Envio envio,
                               TransactionManager transactionManager,
                               Connection conn) {
@@ -145,6 +216,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Elimina un envío de la base de datos.
+     * @param envio El envío a eliminar.
+     * @throws EliminacionEntityException Si ocurre un error durante la eliminación del envío.
+     */
     @Override
     public void eliminar(Envio envio) throws EliminacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -155,6 +231,12 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Elimina un envío en una transacción.
+     * @param envio El envío a eliminar.
+     * @param transactionManager El gestor de transacciones.
+     * @param conn La conexión a la base de datos.
+     */
     private void eliminarTx(Envio envio, TransactionManager transactionManager, Connection conn) {
         try {
             transactionManager.startTransaction();
@@ -170,6 +252,13 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Crea un envío y actualiza el estado del pedido asociado en una transacción.
+     * @param envio El envío a crear.
+     * @param pedido El pedido a actualizar.
+     * @return El número de tracking del envío creado.
+     * @throws CreacionEntityException Si ocurre un error durante la creación del envío o la actualización del pedido.
+     */
     @Override
     public String crearEnvioYActualizarPedido(Envio envio, Pedido pedido) throws CreacionEntityException {
         //validamos para evitar una conexion a la base de datos con registros invalidos
@@ -182,6 +271,14 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Crea un envío y actualiza el estado del pedido asociado en una transacción.
+     * @param envio El envío a crear.
+     * @param pedido El pedido a actualizar.
+     * @param transactionManager El gestor de transacciones.
+     * @param conn La conexión a la base de datos.
+     * @return El número de tracking del envío creado.
+     */
     private String crearEnvioYActualizarPedidoTx(Envio envio,
                                                  Pedido pedido,
                                                  TransactionManager transactionManager,
@@ -201,6 +298,11 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
         }
     }
 
+    /***
+     * Actualiza el estado del envío y del pedido asociado en una transacción.
+     * @param envio El envío a actualizar.
+     * @param pedido El pedido a actualizar.
+     */
     @Override
     public void actualizarEstado(Envio envio, Pedido pedido) {
         validarEnvio(envio);
@@ -213,6 +315,13 @@ public class EnvioServiceImpl implements GenericEnviosService<Envio, Pedido> {
 
     }
 
+    /***
+     * Actualiza el estado del envío y del pedido asociado en una transacción.
+     * @param envio El envío a actualizar.
+     * @param pedido El pedido a actualizar.
+     * @param transactionManager El gestor de transacciones.
+     * @param conn La conexión a la base de datos.
+     */
     private void actualizarEstadoTx(Envio envio, Pedido pedido, TransactionManager transactionManager, Connection conn) {
         try {
             transactionManager.startTransaction();

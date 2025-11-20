@@ -4,6 +4,9 @@ import gestorenvios.ui.console.controllers.DbInitController;
 import gestorenvios.ui.console.input.InputReader;
 import gestorenvios.ui.console.utils.ConsoleUtils;
 
+/***
+ * Clase responsable de mostrar la pantalla de bienvenida y verificar la conexión a la base de datos.
+ */
 public class PantallaBienvenida {
 
     private PantallaBienvenida() {

@@ -1,6 +1,6 @@
 package gestorenvios.entities;
 
-/**
+/***
  * Estado posible de un Pedido.
  */
 public enum EstadoPedido {
@@ -18,17 +18,19 @@ public enum EstadoPedido {
         return id;
     }
 
-    // Método estático para convertir el INT de la BD a un ENUM
+    /***
+     * Obtiene el estado de pedido correspondiente al ID proporcionado.
+     *
+     * @param id El ID del estado de pedido.
+     * @return El estado de pedido correspondiente.
+     * @throws IllegalArgumentException Si el ID no corresponde a ningún estado válido.
+     */
     public static EstadoPedido fromId(int id) {
         for (EstadoPedido estado : values()) {
             if (estado.id == id) {
                 return estado;
             }
         }
-
         throw new IllegalArgumentException("ID de estado de pedido inválido: " + id);
     }
-
-
 }
-

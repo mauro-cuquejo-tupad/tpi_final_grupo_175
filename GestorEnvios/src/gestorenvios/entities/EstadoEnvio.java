@@ -1,6 +1,6 @@
 package gestorenvios.entities;
 
-/**
+/***
  * Estado del proceso de envío.
  */
 public enum EstadoEnvio {
@@ -8,20 +8,23 @@ public enum EstadoEnvio {
     EN_TRANSITO(2),
     ENTREGADO(3);
 
-    //Agrego campo para guardar el ID
     private final int id;
 
-    //constructor
     EstadoEnvio(int id) {
         this.id = id;
     }
 
-    // Agrego getter para ID para guardar en la BD
     public int getId() {
         return id;
     }
 
-    // Agrego estático para leer de la BD
+    /***
+     * Obtiene el estado de envío a partir de su ID.
+     *
+     * @param id ID del estado de envío.
+     * @return EstadoEnvio correspondiente al ID.
+     * @throws IllegalArgumentException si el ID no corresponde a ningún estado.
+     */
     public static EstadoEnvio fromId(int id) {
         for (EstadoEnvio estado : values()) {
             if (estado.id == id) {

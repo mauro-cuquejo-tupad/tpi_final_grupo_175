@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package gestorenvios.config;
 
 import gestorenvios.models.exceptions.ConfiguracionPropertiesException;
@@ -9,19 +5,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/**
+/***
  * Configuración de la aplicación. Proporciona acceso a las propiedades definidas en application.properties.
  */
 public class ApplicationConfig {
-    /** Instancia única de Properties con la configuración cargada. */
+    /*** Instancia única de Properties con la configuración cargada. */
     private static Properties properties;
 
-    /**
+    /***
      * Constructor privado para evitar instanciación externa (patrón Singleton).
      */
     private ApplicationConfig() {}
 
-    /**
+    /***
      * Obtiene la instancia única de Properties cargando el archivo si es necesario.
      * @return Instancia de Properties con la configuración
      * @throws ConfiguracionPropertiesException si ocurre un error al cargar el archivo
@@ -39,7 +35,7 @@ public class ApplicationConfig {
         return properties;
     }
 
-    /**
+    /***
      * Obtiene el valor de una propiedad de configuración por su clave.
      * @param clave Clave de la propiedad
      * @return Valor de la propiedad o null si no existe

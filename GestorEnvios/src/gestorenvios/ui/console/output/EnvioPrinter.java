@@ -3,6 +3,9 @@ package gestorenvios.ui.console.output;
 import gestorenvios.entities.Envio;
 import gestorenvios.ui.console.utils.ConsoleUtils;
 
+/***
+ * Clase utilitaria para imprimir en consola la información de envíos.
+ */
 public class EnvioPrinter {
 
     private static final int ANCHO_ID = 6;
@@ -16,6 +19,9 @@ public class EnvioPrinter {
         // Constructor privado para evitar instanciación
     }
 
+    /***
+     * Muestra la cabecera de la tabla de envíos en consola.
+     */
     public static void mostrarCabecera() {
         String cabecera = ConsoleUtils.padRight("ID", ANCHO_ID) + SEP_COLUMNA +
                 ConsoleUtils.padRight("Empresa", ANCHO_EMPRESA) + SEP_COLUMNA +
@@ -24,6 +30,10 @@ public class EnvioPrinter {
         ConsoleUtils.imprimirInfo(cabecera);
     }
 
+    /***
+     * Muestra el detalle de un envío en consola.
+     * @param envio El envío cuyo detalle se va a mostrar.
+     */
     public static void mostrarDetalle(Envio envio) {
         if (envio == null || envio.getEliminado()) {
             ConsoleUtils.imprimirError("❌ No se encontró el envio.");
@@ -37,6 +47,11 @@ public class EnvioPrinter {
         ConsoleUtils.imprimirInfo(separadorFila(detalle.length() - 1));
     }
 
+    /***
+     * Genera un separador de fila para la tabla.
+     * @param n La longitud del separador.
+     * @return Una cadena que representa el separador.
+     */
     private static String separadorFila(int n) {
         return new String(new char[n]).replace("\0", "-");
     }

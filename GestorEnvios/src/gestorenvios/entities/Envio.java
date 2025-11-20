@@ -2,20 +2,23 @@ package gestorenvios.entities;
 
 import java.time.LocalDate;
 
-/**
- * Entidad que representa un Envío asociado a un Pedido.
+/***
+ * Entidad que representa un envío asociado a un pedido.
  * <p>
- * Campos (según consigna):
- * - id: Long (PK)
- * - eliminado: Boolean (baja lógica)
- * - tracking: String (UNIQUE, máx. 40)
- * - empresa: EmpresaEnvio (ANDREANI, OCA, CORREO_ARG)
- * - tipo: TipoEnvio (ESTANDAR, EXPRES)
- * - costo: double (10,2)
- * - fechaDespacho: LocalDate
- * - fechaEstimada: LocalDate
- * - estado: EstadoEnvio (EN_PREPARACION, EN_TRANSITO, ENTREGADO)
+ * Campos según consigna:
+ * <ul>
+ *   <li><b>id</b>: Long (PK)</li>
+ *   <li><b>eliminado</b>: Boolean (baja lógica)</li>
+ *   <li><b>tracking</b>: String (UNIQUE, máx. 40)</li>
+ *   <li><b>empresa</b>: EmpresaEnvio (ANDREANI, OCA, CORREO_ARG)</li>
+ *   <li><b>tipo</b>: TipoEnvio (ESTANDAR, EXPRES)</li>
+ *   <li><b>costo</b>: double (10,2)</li>
+ *   <li><b>fechaDespacho</b>: LocalDate</li>
+ *   <li><b>fechaEstimada</b>: LocalDate</li>
+ *   <li><b>estado</b>: EstadoEnvio (EN_PREPARACION, EN_TRANSITO, ENTREGADO)</li>
+ * </ul>
  */
+
 public class Envio {
 
     private Long id;
@@ -28,29 +31,6 @@ public class Envio {
     private LocalDate fechaDespacho;
     private LocalDate fechaEstimada;
     private EstadoEnvio estado;
-
-    public Envio() {
-    }
-
-    public Envio(Long id,
-                 Boolean eliminado,
-                 String tracking,
-                 EmpresaEnvio empresa,
-                 TipoEnvio tipo,
-                 double costo,
-                 LocalDate fechaDespacho,
-                 LocalDate fechaEstimada,
-                 EstadoEnvio estado) {
-        this.id = id;
-        this.eliminado = eliminado;
-        this.tracking = tracking;
-        this.empresa = empresa;
-        this.tipo = tipo;
-        this.costo = costo;
-        this.fechaDespacho = fechaDespacho;
-        this.fechaEstimada = fechaEstimada;
-        this.estado = estado;
-    }
 
     public Long getId() {
         return id;

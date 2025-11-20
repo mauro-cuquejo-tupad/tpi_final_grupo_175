@@ -11,17 +11,32 @@ import gestorenvios.ui.console.utils.Paginador;
 import java.time.LocalDate;
 import java.util.List;
 
+/***
+ * Controlador de consola para gestionar operaciones relacionadas con Pedidos.
+ */
 public class PedidoConsoleController {
 
+    /***
+     * Mensaje estándar para indicar que la operación fue cancelada por el usuario.
+     */
     public static final String OPERACION_CANCELADA_POR_EL_USUARIO = "❌ Operación cancelada por el usuario.";
     private final GenericPedidosService<Pedido> pedidoService;
     private final InputReader input;
 
+    /***
+     * Constructor del controlador de consola para Pedidos.
+     *
+     * @param pedidoService Servicio genérico para gestionar Pedidos.
+     * @param input Lector de entrada para interactuar con el usuario.
+     */
     public PedidoConsoleController(GenericPedidosService<Pedido> pedidoService, InputReader input) {
         this.pedidoService = pedidoService;
         this.input = input;
     }
 
+    /***
+     * Crea un nuevo pedido solicitando los datos necesarios al usuario.
+     */
     public void crear() {
         try {
             ConsoleUtils.imprimirDivisores("CREAR NUEVO PEDIDO");
@@ -41,6 +56,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Lista todos los pedidos con paginación.
+     */
     public void listar() {
         ConsoleUtils.imprimirDivisores("LISTA DE PEDIDOS");
         try {
@@ -69,6 +87,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Busca un pedido por su número.
+     */
     public void buscarPorNumero() {
         ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR NÚMERO");
         try {
@@ -85,6 +106,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Busca un pedido por su código de tracking.
+     */
     public void buscarPorTracking() {
         ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR TRACKING");
         try {
@@ -97,6 +121,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Busca un pedido por su ID.
+     */
     public void buscarPorId() {
         ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR ID");
         try {
@@ -109,6 +136,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Busca pedidos por el nombre del cliente con paginación.
+     */
     public void buscarPorCliente() {
         ConsoleUtils.imprimirDivisores("BUSCAR PEDIDO POR CLIENTE");
         try {
@@ -138,6 +168,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Actualiza un pedido existente solicitando los nuevos datos al usuario.
+     */
     public void actualizarPedido() {
         ConsoleUtils.imprimirDivisores("ACTUALIZAR PEDIDO POR NÚMERO");
         try {
@@ -180,7 +213,9 @@ public class PedidoConsoleController {
         }
     }
 
-    //ELIMINAR PEDIDOS
+    /***
+     * Elimina un pedido por su número.
+     */
     public void eliminarPedidoPorNumero() {
         ConsoleUtils.imprimirDivisores("ELIMINAR PEDIDO POR NÚMERO");
         try {
@@ -197,6 +232,9 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Elimina un pedido por su ID.
+     */
     public void eliminarPedidoPorId() {
         ConsoleUtils.imprimirDivisores("ELIMINAR PEDIDO POR ID");
         try {
@@ -207,6 +245,11 @@ public class PedidoConsoleController {
         }
     }
 
+    /***
+     * Lógica común para eliminar un pedido con validaciones.
+     *
+     * @param pedido Pedido a eliminar.
+     */
     private void eliminar(Pedido pedido) {
         if (pedido == null) {
             ConsoleUtils.imprimirError("❌ El pedido no existe.");

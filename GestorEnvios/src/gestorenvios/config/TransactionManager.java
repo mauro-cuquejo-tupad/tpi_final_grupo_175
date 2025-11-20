@@ -1,13 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package gestorenvios.config;
+
+import gestorenvios.ui.console.utils.ConsoleUtils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-/**
+/***
  * Gestiona transacciones JDBC sobre una conexión.
  * Permite iniciar, confirmar, revertir y cerrar transacciones de forma segura.
  * Implementa AutoCloseable para facilitar el manejo de recursos.
@@ -16,7 +14,7 @@ public class TransactionManager implements AutoCloseable {
     private final Connection conn;
     private boolean transactionActive;
 
-    /**
+    /***
      * Crea un TransactionManager para la conexión dada.
      * @param conn Conexión JDBC a gestionar
      * @throws IllegalArgumentException si la conexión es null
@@ -29,7 +27,7 @@ public class TransactionManager implements AutoCloseable {
         this.transactionActive = false;
     }
 
-    /**
+    /***
      * Devuelve la conexión gestionada.
      * @return Conexión JDBC
      */
@@ -37,7 +35,7 @@ public class TransactionManager implements AutoCloseable {
         return conn;
     }
 
-    /**
+    /***
      * Inicia una transacción desactivando el autocommit.
      * @throws SQLException si la conexión no está disponible o cerrada
      */
@@ -52,7 +50,7 @@ public class TransactionManager implements AutoCloseable {
         transactionActive = true;
     }
 
-    /**
+    /***
      * Confirma la transacción activa.
      * @throws SQLException si no hay transacción activa o no hay conexión
      */
@@ -67,7 +65,7 @@ public class TransactionManager implements AutoCloseable {
         transactionActive = false;
     }
 
-    /**
+    /***
      * Revierte la transacción activa si existe.
      */
     public void rollback() {
@@ -76,12 +74,12 @@ public class TransactionManager implements AutoCloseable {
                 conn.rollback();
                 transactionActive = false;
             } catch (SQLException e) {
-                System.err.println("Error durante el rollback: " + e.getMessage());
+                ConsoleUtils.imprimirError("Error durante el rollback: " + e.getMessage());
             }
         }
     }
 
-    /**
+    /***
      * Cierra la conexión y revierte la transacción si está activa.
      */
     @Override
@@ -94,12 +92,12 @@ public class TransactionManager implements AutoCloseable {
                 conn.setAutoCommit(true);
                 conn.close();
             } catch (SQLException e) {
-                System.err.println("Error al cerrar la conexión: " + e.getMessage());
+                ConsoleUtils.imprimirError("Error al cerrar la conexión: " + e.getMessage());
             }
         }
     }
 
-    /**
+    /***
      * Indica si hay una transacción activa.
      * @return true si la transacción está activa, false si no
      */

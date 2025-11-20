@@ -14,13 +14,26 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+/***
+ * Implementación del servicio genérico para la gestión de pedidos.
+ */
 public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
     PedidoDAO pedidoDAO;
 
+    /***
+     * Constructor de la clase PedidoServiceImpl.
+     * @param pedidoDAO DAO para la gestión de pedidos.
+     */
     public PedidoServiceImpl(PedidoDAO pedidoDAO) {
         this.pedidoDAO = pedidoDAO;
     }
 
+    /***
+     * Crea un nuevo pedido en la base de datos.
+     * @param pedido Pedido a crear.
+     * @return Número del pedido creado.
+     * @throws CreacionEntityException Si ocurre un error durante la creación del pedido.
+     */
     @Override
     public String crear(Pedido pedido) throws CreacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -32,6 +45,13 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Crea un nuevo pedido dentro de una transacción.
+     * @param pedido Pedido a crear.
+     * @param transactionManager Gestor de transacciones.
+     * @param conn Conexión a la base de datos.
+     * @return Número del pedido creado.
+     */
     private String crearTx(Pedido pedido,
                            TransactionManager transactionManager,
                            Connection conn) {
@@ -48,7 +68,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
-
+    /***
+     * Genera un nuevo número de pedido basado en el último número registrado.
+     * @param conn Conexión a la base de datos.
+     * @return Nuevo número de pedido.
+     * @throws SQLException Si ocurre un error al obtener el último número de pedido.
+     */
     private String generarNuevoNumeroPedidoTx(Connection conn) throws SQLException {
         String ultimoPedido = pedidoDAO.buscarUltimoNumeroPedidoTx(conn);
 
@@ -61,6 +86,10 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         return String.format("PED-%08d", numero);
     }
 
+    /***
+     * Valida los datos del pedido.
+     * @param pedido Pedido a validar.
+     */
     private void validarPedido(Pedido pedido) {
         if (StringUtils.isNullOrEmpty(pedido.getClienteNombre())) {
             throw new IllegalArgumentException("El nombre del cliente no puede estar vacío.");
@@ -70,6 +99,13 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Busca todos los pedidos con paginación.
+     * @param cantidad Cantidad de pedidos por página.
+     * @param pagina Número de página.
+     * @return Lista de pedidos.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws ConsultaEntityException {
         try {
@@ -79,6 +115,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Busca un pedido por su ID.
+     * @param id ID del pedido.
+     * @return Pedido encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Pedido buscarPorId(Long id) throws ConsultaEntityException {
         try {
@@ -88,6 +130,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Busca un pedido por su número de pedido.
+     * @param numero Número del pedido.
+     * @return Pedido encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Pedido buscarPorNumeroPedido(String numero) throws ConsultaEntityException {
         try {
@@ -97,6 +145,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Busca un pedido por su número de tracking.
+     * @param tracking Número de tracking del pedido.
+     * @return Pedido encontrado.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Pedido buscarPorNumeroTracking(String tracking) throws ConsultaEntityException {
         try {
@@ -106,6 +160,14 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Busca pedidos por el nombre del cliente con paginación.
+     * @param cliente Nombre del cliente.
+     * @param cantidad Cantidad de pedidos por página.
+     * @param pagina Número de página.
+     * @return Lista de pedidos encontrados.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public List<Pedido> buscarPorCliente(String cliente, Long cantidad, Long pagina) {
         try {
@@ -115,6 +177,11 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Obtiene la cantidad total de pedidos.
+     * @return Cantidad total de pedidos.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Long obtenerCantidadTotalDePedidos() throws ConsultaEntityException {
         try {
@@ -124,6 +191,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Obtiene la cantidad total de pedidos por nombre de cliente.
+     * @param clienteNombre Nombre del cliente.
+     * @return Cantidad total de pedidos del cliente.
+     * @throws ConsultaEntityException Si ocurre un error durante la consulta.
+     */
     @Override
     public Long obtenerCantidadTotalDePedidosPorCliente(String clienteNombre) {
         try {
@@ -133,6 +206,11 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Actualiza un pedido existente.
+     * @param pedido Pedido a actualizar.
+     * @throws ActualizacionEntityException Si ocurre un error durante la actualización.
+     */
     @Override
     public void actualizar(Pedido pedido) throws ActualizacionEntityException {
         validarPedido(pedido);
@@ -144,7 +222,13 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
-
+    /***
+     * Actualiza un pedido dentro de una transacción.
+     * @param pedido Pedido a actualizar.
+     * @param transactionManager Gestor de transacciones.
+     * @param conn Conexión a la base de datos.
+     * @throws ActualizacionEntityException Si ocurre un error durante la actualización.
+     */
     private void actualizarTx(Pedido pedido,
                               TransactionManager transactionManager,
                               Connection conn) throws ActualizacionEntityException {
@@ -158,6 +242,12 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Actualiza un pedido dentro de una transacción con conexión proporcionada.
+     * @param pedido Pedido a actualizar.
+     * @param conn Conexión a la base de datos.
+     * @throws ActualizacionEntityException Si ocurre un error durante la actualización.
+     */
     @Override
     public void actualizarTx(Pedido pedido, Connection conn) throws ActualizacionEntityException {
         try {
@@ -167,6 +257,11 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Elimina lógicamente un pedido.
+     * @param pedido Pedido a eliminar.
+     * @throws EliminacionEntityException Si ocurre un error durante la eliminación.
+     */
     @Override
     public void eliminar(Pedido pedido) throws EliminacionEntityException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -177,6 +272,13 @@ public class PedidoServiceImpl implements GenericPedidosService<Pedido> {
         }
     }
 
+    /***
+     * Elimina lógicamente un pedido dentro de una transacción.
+     * @param pedido Pedido a eliminar.
+     * @param transactionManager Gestor de transacciones.
+     * @param conn Conexión a la base de datos.
+     * @throws EliminacionEntityException Si ocurre un error durante la eliminación.
+     */
     private void eliminarTx(Pedido pedido,
                             TransactionManager transactionManager,
                             Connection conn) {

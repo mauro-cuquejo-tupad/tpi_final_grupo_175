@@ -7,84 +7,67 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
+/***
  * DAO para operaciones CRUD y consultas sobre la entidad Pedido.
  */
 public class PedidoDAO implements GenericDAO<Pedido> {
+
+    /*** Campos estándar seleccionados en las consultas de pedido. */
     private static final String CAMPOS_PEDIDO = " p.id, p.numero, p.fecha, p.cliente_nombre, p.total, p.id_estado_pedido, p.eliminado, p.id_envio,"
             + " e.id AS envio_id, e.tracking AS envio_tracking, e.id_empresa AS envio_id_empresa, e.id_tipo_envio AS envio_id_tipo, "
             + " e.costo AS envio_costo, e.fecha_despacho AS envio_fecha_despacho, e.fecha_estimada AS envio_fecha_estimada, e.id_estado_envio AS envio_id_estado, e.eliminado AS envio_eliminado ";
 
+
+    /*** Query base para SELECT de pedido. */
     private static final String QUERY_BASE = "SELECT" + CAMPOS_PEDIDO + " FROM Pedido p";
 
-    public static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Pedido WHERE eliminado = FALSE";
-    public static final String COUNT_SQL_BY_NAME = "SELECT COUNT(*) AS total FROM Pedido p"
+    /*** Query para contar envíos activos (no eliminados). */
+    private static final String COUNT_SQL = "SELECT COUNT(*) AS total FROM Pedido WHERE eliminado = FALSE";
+    private static final String COUNT_SQL_BY_NAME = "SELECT COUNT(*) AS total FROM Pedido p"
             + " WHERE p.eliminado = FALSE AND (UPPER(p.cliente_nombre) LIKE ?)";
 
-    /**
-     * Query de inserción de pedido.
-     */
+    /*** Query para insertar un nuevo pedido. */
     private static final String INSERT_SQL = "INSERT INTO Pedido (numero, fecha, cliente_nombre, total, id_estado_pedido, id_envio) VALUES (?, ?, ?, ?, ?, ?)";
 
 
-    /**
-     * Query de actualización de pedido por ID.
-     * NO actualiza el flag eliminado (solo se modifica en soft delete).
-     */
+    /*** Query para actualizar un pedido existente por ID. */
     private static final String UPDATE_SQL = "UPDATE Pedido SET numero = ?, fecha = ?, cliente_nombre = ?, total = ?, id_estado_pedido = ?, id_envio = ? WHERE id = ?";
 
-    /**
-     * Query de soft delete. Marca eliminado = TRUE sin borrar físicamente la
-     * fila. Preserva integridad referencial y datos históricos.
-     */
+    /*** Query para eliminación lógica de un envío. */
     private static final String DELETE_SQL = "UPDATE Pedido SET eliminado = TRUE WHERE id = ?";
 
-    /**
-     * Query para obtener pedido por ID. LEFT JOIN con envio para cargar la
-     * relación de forma eager. Solo retorna pedidos activos (eliminado=FALSE).
-     */
+    /***
+     * Query para obtener pedido por ID. LEFT JOIN con envio. Solo retorna pedidos activos (eliminado=FALSE). */
     private static final String SELECT_BY_ID_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE AND p.id = ?";
 
-    /**
-     * Query para obtener todos los pedidos activos con paginación.
-     * LEFT JOIN con envios para cargar relaciones.
-     * Filtra por eliminado=FALSE (solo pedidos activos).
-     * Usa LIMIT y OFFSET para paginación dinámica.
-     */
+    /*** Query para listar pedidos activos con paginación. */
     private static final String SELECT_ALL_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE"
             + " LIMIT ? OFFSET ?";
 
-    /**
-     * Query de búsqueda por cliente_nombre con LIKE.
-     * Permite búsqueda flexible
-     * Solo pedidos activos (eliminado=FALSE).
-     */
+    /*** Query de pedidos activos búsqueda por cliente_nombre con LIKE y UPPER para permitir búsqueda flexible. */
     private static final String SEARCH_BY_NAME_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE AND (UPPER(p.cliente_nombre) LIKE ?)"
             + " LIMIT ? OFFSET ?";
 
-    /**
-     * Query de búsqueda exacta por NÚMERO de pedido. Incluye LEFT JOIN con
-     * envíos. Filtra por eliminado=FALSE.
-     */
+    /*** Query para buscar un pedido activo por número de pedido. */
     private static final String SEARCH_BY_NUMERO_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = FALSE AND p.numero = ?";
 
-    /**
-     * Query de búsqueda por código de TRACKING del envío asociado.
-     * Filtra por e.tracking (tabla Envio) pero devuelve el Pedido.
-     */
+    /*** Query de búsqueda de pedidos activos por código de TRACKING del envío asociado. */
     private static final String SEARCH_BY_TRACKING_SQL = QUERY_BASE
             + " LEFT JOIN Envio e ON p.id_envio = e.id"
             + " WHERE p.eliminado = 0 AND e.tracking = ?";
 
+    /*** Query para buscar el último número de pedido. */
     private static final String SEARCH_MAX_NUMERO_PEDIDO = "SELECT MAX(numero) AS numero FROM Pedido";
+
+    /*** Constantes de nombres de columnas en ResultSet. */
     public static final String PEDIDO_ID = "id";
     public static final String PEDIDO_NUMERO = "numero";
     public static final String PEDIDO_FECHA = "fecha";
@@ -96,12 +79,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
 
     /**
-     * Inserta un pedido dentro de una transacción existente. NO crea nueva
-     * conexión, recibe una Connection externa. NO cierra la conexión
-     * (responsabilidad del caller, ej. un TransactionManager).
-     * <p>
-     * Usado por: - Operaciones que requieren múltiples inserts coordinados (ej.
-     * Pedido + Envío) - Rollback automático si alguna operación falla
+     * Inserta un pedido dentro de una transacción externa.
+     * No gestiona la conexión, debe ser proporcionada por el invocador.
      *
      * @param pedido Pedido a insertar
      * @param conn   Conexión transaccional (NO se cierra en este método)
@@ -116,7 +95,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Actualiza un pedido existente dentro de una transacción.
+     * Actualiza un envío existente dentro de una transacción externa.
+     * No gestiona la conexión, debe ser proporcionada por el invocador.
      *
      * @param pedido Pedido a actualizar
      * @param conn   Conexión transaccional
@@ -153,7 +133,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Realiza un borrado lógico de un pedido (marca eliminado).
+     * Realiza eliminación lógica de un pedido dentro de una transacción externa.
      *
      * @param id   ID del pedido
      * @param conn Conexión transaccional
@@ -199,13 +179,12 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Obtiene todos los pedidos activos (eliminado=FALSE) con paginación.
-     * Incluye sus envíos asociados mediante LEFT JOIN (carga eager).
+     * Busca todos los pedidos activos con paginación, incluyendo sus envíos asociados.
      *
-     * @param cantidad Número de registros por página (si es null, usa 10 por defecto)
-     * @param pagina   Número de página (1-indexed, si es null, usa 1 por defecto)
+     * @param cantidad Número de registros por página (si es null, usa 50 por defecto)
+     * @param pagina   Número de página (si es null, usa 1 por defecto)
      * @return Lista de pedidos activos con sus envíos (puede estar vacía)
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException si ocurre un error en la consulta
      */
     @Override
     public List<Pedido> buscarTodos(Long cantidad, Long pagina) throws SQLException {
@@ -219,8 +198,8 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_ALL_SQL)) {
 
-            pstmt.setLong(1, registrosPorPagina); // LIMIT
-            pstmt.setLong(2, offset);              // OFFSET
+            pstmt.setLong(1, registrosPorPagina);
+            pstmt.setLong(2, offset);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -235,15 +214,11 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Busca pedidos por nombre de cliente con búsqueda flexible (LIKE). Permite
-     * búsqueda parcial.
-     * <p>
-     * Patrón de búsqueda: LIKE "%filtro%" en clienteNombre
+     * Busca pedidos por nombre de cliente. Permite búsqueda parcial. No es case sensitive.
      *
-     * @param nombre Texto a buscar en el nombre del cliente (no puede estar
-     *               vacío)
+     * @param nombre Texto a buscar en el nombre del cliente (no puede estar vacío)
      * @return Lista de pedidos que coinciden con el filtro (puede estar vacía)
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException si ocurre un error en la consulta
      */
     public List<Pedido> buscarPorClienteNombre(String nombre, Long cantidad, Long pagina) throws SQLException {
         if (nombre == null || nombre.trim().isEmpty()) {
@@ -277,12 +252,11 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Busca un pedido por su NÚMERO exacto (campo UNIQUE). Usa comparación
-     * exacta (=).
+     * Busca un pedido por Número.
      *
      * @param numero Número exacto a buscar (ej: "PED-00123")
      * @return Pedido con ese número, o null si no existe o está eliminado
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException si ocurre un error en la consulta
      */
     public Pedido buscarPorNumero(String numero) throws SQLException {
         if (numero == null || numero.trim().isEmpty()) {
@@ -307,12 +281,11 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Busca un pedido basándose en el código de tracking de su envío.
-     * Realiza un JOIN y filtra por la tabla Envio.
+     * Busca un pedido por código de tracking de su envío.
      *
-     * @param tracking Código de seguimiento (ej: "TRK-999")
+     * @param tracking Código de tracking (ej: "TRK-999")
      * @return El Pedido asociado a ese tracking, o null si no existe.
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException si ocurre un error en la consulta
      */
     public Pedido buscarPorTracking(String tracking) throws SQLException {
         if (tracking == null || tracking.trim().isEmpty()) {
@@ -342,7 +315,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
      *
      * @param pstmt  PreparedStatement
      * @param pedido Pedido
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException si ocurre un error al setear los parámetros
      */
     private void setPedidoParameters(PreparedStatement pstmt, Pedido pedido) throws SQLException {
 
@@ -382,9 +355,9 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     /**
      * Mapea un ResultSet a un objeto Pedido, incluyendo su envío asociado.
      *
-     * @param rs ResultSet
+     * @param rs ResultSet del registro a mapear
      * @return Pedido mapeado
-     * @throws SQLException Si hay error de BD
+     * @throws SQLException Si ocurre un error al leer el ResultSet
      */
     private Pedido toPedido(ResultSet rs) throws SQLException {
 
